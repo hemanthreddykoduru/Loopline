@@ -548,6 +548,16 @@ function App() {
             </select>
             <Icon name="chevron" size={14} />
           </label>
+          {search || filter !== 'all' ? (
+            <button
+              type="button"
+              className="text-button filter-reset"
+              onClick={() => { setSearch(''); setFilter('all') }}
+              data-testid="clear-release-filters"
+            >
+              Clear filters
+            </button>
+          ) : null}
         </div>
         {filteredReleases.length ? (
           <div className="release-list">

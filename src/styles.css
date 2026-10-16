@@ -1232,6 +1232,10 @@ button:disabled {
   color: var(--mint);
 }
 
+.filter-reset {
+  margin-left: auto;
+}
+
 .activity-list {
   display: grid;
   gap: 0;
