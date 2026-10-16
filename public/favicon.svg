@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
   <title>Loopline</title>
-  <rect width="64" height="64" rx="18" fill="#0b0e13"/>
-  <g fill="none" stroke="#7c9ce0" stroke-width="3">
+  <rect width="64" height="64" rx="18" fill="#131313"/>
+  <g fill="none" stroke="#54b365" stroke-width="3">
     <path d="M21 27a13 13 0 1 1 0 10"/>
     <path d="M43 37a13 13 0 1 1 0-10"/>
   </g>
-  <circle cx="21" cy="32" r="3.5" fill="#7c9ce0"/>
-  <circle cx="43" cy="32" r="3.5" fill="#5d7ec4"/>
+  <circle cx="21" cy="32" r="3.5" fill="#54b365"/>
+  <circle cx="43" cy="32" r="3.5" fill="#478d54"/>
 </svg>
