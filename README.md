@@ -7,7 +7,7 @@ This build is intentionally a client-side demo. It does not claim a live GitHub,
 
 ## Submission details
 
-- **Live URL:** `PENDING_DEPLOYMENT`
+- **Live URL:** https://hemanthreddykoduru.github.io/Loopline/
 - **What the suite should cover:** release search and filtering, navigation, creating a release with required-field validation, opening a failure bundle, applying the suggested fix, running verification through the visible running state, and switching between the overview, release directory, test-run history, and settings views.
 - **Primary demo path:** open **Checkout refresh** → **View verification bundle** → **Apply suggested fix** → **Run again**.
 - **Required before submitting:** replace `PENDING_DEPLOYMENT` with the public URL, connect the public GitHub repository in the TestSprite dashboard, generate a suite against the live URL, open at least one PR carrying a TestSprite comment or status check, and post the PR URL, live URL, and TestSprite account email in `#hackathon-submissions`.
