@@ -108,28 +108,28 @@ const initialActivity = [
   {
     id: 'activity-1',
     tone: 'rose',
-    title: 'Checkout refresh needs a look',
+    title: 'Checkout refresh requires review',
     detail: 'Browser journeys found 2 checkout edge cases.',
     time: '12 min ago',
   },
   {
     id: 'activity-2',
-    tone: 'mint',
+    tone: 'success',
     title: 'Team permissions verified',
-    detail: 'All release gates are green.',
+    detail: 'All release checks passed.',
     time: '1 hr ago',
   },
   {
     id: 'activity-3',
     tone: 'amber',
     title: 'Usage insights queued',
-    detail: 'A scheduled verification started from main.',
+    detail: 'Scheduled verification started from main.',
     time: 'Yesterday',
   },
   {
     id: 'activity-4',
-    tone: 'mint',
-    title: 'Notification center shipped',
+    tone: 'success',
+    title: 'Notification center released',
     detail: 'Verification bundle archived with the release.',
     time: 'Nov 14',
   },
@@ -306,7 +306,7 @@ function ReleaseCard({ release, selected, onSelect }) {
       <span className="release-card-name">{release.name}</span>
       <span className="release-card-branch"><Icon name="branch" size={13} /> {release.branch}</span>
       <span className="release-card-bottomline">
-        <span>{failedCount ? `${failedCount} check${failedCount > 1 ? 's' : ''} flagged` : 'All checks green'}</span>
+        <span>{failedCount ? `${failedCount} check${failedCount > 1 ? 's' : ''} failed` : 'All checks passed'}</span>
         <span>{release.lastVerified}</span>
       </span>
     </button>
@@ -345,7 +345,7 @@ function EmptyReleases({ onCreate }) {
     <div className="empty-state">
       <span className="empty-icon"><Icon name="layers" size={20} /></span>
       <h3>No matching releases</h3>
-      <p>Try a different search or add a release to start a verification loop.</p>
+      <p>Try a different search or add a release to verify it.</p>
       <button type="button" className="button button-secondary" onClick={onCreate} data-testid="empty-new-release">
         <Icon name="plus" size={16} /> New release
       </button>
@@ -434,7 +434,7 @@ function App() {
     addActivity({
       tone: 'amber',
       title: `${selectedRelease.name} is verifying`,
-      detail: 'The self-testing loop is running its release gates.',
+      detail: 'Release checks are running.',
       time: 'just now',
     })
     showNotice(`Verification started for ${selectedRelease.version}`)
@@ -450,12 +450,12 @@ function App() {
          checks: resolveChecks(release.checks),
       }))
       addActivity({
-        tone: 'mint',
+        tone: 'success',
         title: `${selectedRelease.name} verified`,
-        detail: 'All release gates passed in the latest loop.',
+        detail: 'All release checks passed.',
         time: 'just now',
       })
-      showNotice(`${selectedRelease.version} is verified and ready to ship`)
+      showNotice(`${selectedRelease.version} is verified and ready for release`)
     }, 2200)
   }
 
@@ -472,12 +472,12 @@ function App() {
     setRunState('passed')
     setFailureOpen(false)
     addActivity({
-      tone: 'mint',
+      tone: 'success',
       title: `Suggested fix applied to ${selectedRelease.name}`,
-      detail: 'The failed browser journeys are green again.',
+      detail: 'The failed browser journeys now pass.',
       time: 'just now',
     })
-    showNotice('Suggested fix applied. Release is verified.')
+    showNotice('Suggested fix applied. Release marked verified.')
   }
 
   function updateForm(field, value) {
@@ -503,7 +503,7 @@ function App() {
     setActiveView('releases')
     addActivity({
       tone: 'amber',
-      title: `${newRelease.name} added to the loop`,
+      title: `${newRelease.name} added to releases`,
       detail: `${newRelease.version} is ready for its first verification.`,
       time: 'just now',
     })
@@ -521,7 +521,7 @@ function App() {
         <div className="panel-header">
           <div>
             <div className="panel-kicker">Release queue</div>
-            <h2>{compact ? 'All releases' : 'What is moving through the loop'}</h2>
+            <h2>{compact ? 'All releases' : 'Releases in verification'}</h2>
           </div>
           <span className="panel-count">{filteredReleases.length} visible</span>
         </div>
@@ -589,7 +589,7 @@ function App() {
             <h2>{selectedRelease.name}</h2>
             <span className="detail-version">{selectedRelease.version} <span>·</span> {selectedRelease.owner}</span>
           </div>
-           <button type="button" className="icon-button" aria-label="More release options" title="More release options" onClick={() => showNotice('Release actions are intentionally limited in this demo.')}>
+           <button type="button" className="icon-button" aria-label="More release options" title="More release options" onClick={() => showNotice('Release actions are unavailable without a live integration.')}>
             <Icon name="dots" size={18} />
           </button>
         </div>
@@ -635,15 +635,15 @@ function App() {
         </div>
 
         <div className="checks-heading">
-          <span>Release gates</span>
-          <span>{selectedRelease.checks.filter((check) => check.status === 'passed').length}/{selectedRelease.checks.length} green</span>
+          <span>Release checks</span>
+          <span>{selectedRelease.checks.filter((check) => check.status === 'passed').length}/{selectedRelease.checks.length} passed</span>
         </div>
         <ul className="check-list">
           {selectedRelease.checks.map((check) => <CheckRow key={check.name} check={check} />)}
         </ul>
         <div className="detail-footnote">
           <Icon name="shield" size={15} />
-          Loopline demo data · no repository or CI connection is active.
+          Sample data · no repository or CI connection is active.
         </div>
       </section>
     )
@@ -654,10 +654,10 @@ function App() {
       <section className="panel activity-panel">
         <div className="panel-header">
           <div>
-            <div className="panel-kicker">Signal log</div>
+            <div className="panel-kicker">Activity log</div>
             <h2>Recent activity</h2>
           </div>
-          <button type="button" className="text-button" onClick={() => showNotice('The full activity stream is part of the demo surface.')}>
+          <button type="button" className="text-button" onClick={() => showNotice('The full activity stream is unavailable without a live integration.')}>
             View all <Icon name="arrow" size={14} />
           </button>
         </div>
@@ -682,11 +682,11 @@ function App() {
       <>
         <PageHeading
           eyebrow="Workspace / Overview"
-          title="Ship the green build."
-          description="Track candidate releases from first check to sign-off, with failure context and the next action in view."
+          title="Release verification"
+          description="Review checks, failures, and sign-off status for each candidate release."
         >
-          <button type="button" className="button button-secondary" onClick={() => showNotice('Loopline is running in demo mode.')}>
-            <Icon name="shield" size={16} /> Demo mode
+          <button type="button" className="button button-secondary" onClick={() => showNotice('This workspace uses sample data; no live integration is connected.')}>
+            <Icon name="shield" size={16} /> Sample data
           </button>
           <button type="button" className="button button-primary" onClick={openNewRelease} data-testid="new-release-button">
             <Icon name="plus" size={16} /> New release
@@ -694,10 +694,10 @@ function App() {
         </PageHeading>
 
         <section className="metric-grid" aria-label="Workspace metrics">
-          <MetricCard label="Verified releases" value={passedCount} detail="ready to move forward" tone="mint" icon="check" />
-          <MetricCard label="Needs attention" value={attentionCount} detail="bundles waiting for a fix" tone="rose" icon="alert" />
-          <MetricCard label="Active loops" value={runningCount || '—'} detail={runningCount ? 'verification in flight' : 'nothing running now'} tone="amber" icon="pulse" />
-          <MetricCard label="Median run" value="03:14" detail="sampled across this demo" tone="neutral" icon="clock" />
+          <MetricCard label="Verified releases" value={passedCount} detail="all configured checks passed" tone="success" icon="check" />
+          <MetricCard label="Needs attention" value={attentionCount} detail="failed checks requiring review" tone="rose" icon="alert" />
+          <MetricCard label="Active verifications" value={runningCount || '—'} detail={runningCount ? 'verification in progress' : 'no verification running'} tone="amber" icon="pulse" />
+          <MetricCard label="Median run" value="03:14" detail="based on listed runs" tone="neutral" icon="clock" />
         </section>
 
         <div className="dashboard-grid">
@@ -707,8 +707,8 @@ function App() {
           <section className="panel loop-panel">
              <div className="panel-kicker">Verification loop</div>
              <div className="loop-mark" aria-hidden="true"><span /><span /><span /><span /></div>
-             <h2>Make the next release safer.</h2>
-             <p>Keep the signal, the cause, and the next action together until the release is ready.</p>
+             <h2>Resolve failures before release.</h2>
+             <p>Review the failure, apply the fix, and run the checks again.</p>
             <div className="loop-steps">
               <span><b>01</b> Detect</span>
               <span><b>02</b> Explain</span>
@@ -726,7 +726,7 @@ function App() {
         <PageHeading
           eyebrow="Workspace / Releases"
           title="Release directory"
-          description="Keep every candidate, its latest signal, and the next action in one place."
+          description="Review each candidate release, its latest checks, and required follow-up."
         >
           <button type="button" className="button button-primary" onClick={openNewRelease} data-testid="new-release-button">
             <Icon name="plus" size={16} /> New release
@@ -747,7 +747,7 @@ function App() {
         <PageHeading
           eyebrow="Workspace / Test runs"
           title="Test runs"
-          description="A readable history of the checks that decide whether a release is ready."
+          description="Review the checks run for each release and their results."
         >
           <button type="button" className="button button-secondary" onClick={() => setActiveView('releases')}>
             Browse releases <Icon name="arrow" size={15} />
@@ -779,7 +779,7 @@ function App() {
               </button>
             ))}
           </div>
-          <div className="demo-disclaimer"><Icon name="shield" size={15} /> This is a simulated verification history for the Loopline demo.</div>
+          <div className="demo-disclaimer"><Icon name="shield" size={15} /> Sample history · no repository or CI connection is active.</div>
         </section>
       </>
     )
@@ -790,32 +790,32 @@ function App() {
       <>
         <PageHeading
           eyebrow="Workspace / Settings"
-          title="Control the loop."
-          description="Shape how this workspace reports signals, keeps history, and explains what happens next."
+          title="Verification settings"
+          description="Configure how this workspace reports results, retains history, and handles follow-up."
         />
         <div className="settings-grid">
           <section className="panel settings-panel">
             <div className="panel-kicker">Verification preferences</div>
             <h2>Release behavior</h2>
-            <p className="panel-description">These controls are local to the demo workspace and do not connect to a repository.</p>
+            <p className="panel-description">These settings apply only in this browser session and do not connect to a repository.</p>
             <div className="settings-list">
               <label className="setting-row">
-                <span><strong>Archive successful bundles</strong><small>Keep the green evidence with every release.</small></span>
+                <span><strong>Archive successful bundles</strong><small>Retain verification evidence for each release.</small></span>
                 <input type="checkbox" checked={autoArchive} onChange={(event) => setAutoArchive(event.target.checked)} data-testid="setting-auto-archive" />
               </label>
               <label className="setting-row">
-                <span><strong>Notify on attention</strong><small>Show a local alert when a gate needs a fix.</small></span>
+                <span><strong>Notify on attention</strong><small>Show a local alert when a check fails.</small></span>
                 <input type="checkbox" checked={slackAlerts} onChange={(event) => setSlackAlerts(event.target.checked)} data-testid="setting-alerts" />
               </label>
             </div>
-            <div className="settings-note"><Icon name="shield" size={15} /> Demo settings are saved in this session only.</div>
+            <div className="settings-note"><Icon name="shield" size={15} /> Settings are saved for this session only; no external service is connected.</div>
           </section>
           <section className="panel settings-panel settings-about">
-            <span className="about-badge"><Icon name="pulse" size={15} /> LOOPLINE / DEMO</span>
-             <h2>A clear release signal.</h2>
-             <p>Loopline keeps release evidence close to the decision it supports, without claiming a live repository connection.</p>
-            <button type="button" className="button button-secondary" onClick={() => showNotice('No external services are connected in this demo.')}>
-              <Icon name="external" size={15} /> About this demo
+            <span className="about-badge"><Icon name="pulse" size={15} /> LOOPLINE / LOCAL</span>
+            <h2>About this workspace</h2>
+            <p>This workspace displays sample release data. No repository or CI connection is active.</p>
+            <button type="button" className="button button-secondary" onClick={() => showNotice('No external services are connected.')}>
+              <Icon name="external" size={15} /> Integration status
             </button>
           </section>
         </div>
@@ -837,11 +837,11 @@ function App() {
         <div className="brand-lockup">
           <span className="brand-orbit" aria-hidden="true"><span /></span>
           <span className="brand-name">loopline</span>
-          <span className="brand-version">beta</span>
+          <span className="brand-version">v0.1</span>
         </div>
-        <button type="button" className="workspace-switcher" onClick={() => showNotice('You are viewing the Loopline demo workspace.')}>
+        <button type="button" className="workspace-switcher" onClick={() => showNotice('You are viewing a local sample workspace.')}>
           <span className="workspace-avatar">L</span>
-          <span className="workspace-copy"><strong>Launchpad</strong><small>Demo workspace</small></span>
+          <span className="workspace-copy"><strong>Launchpad</strong><small>Local workspace</small></span>
           <Icon name="chevron" size={15} />
         </button>
         <nav className="primary-nav">
@@ -861,11 +861,11 @@ function App() {
           </button>
         </nav>
          <div className="sidebar-bottom">
-           <div className="loop-status"><span className="live-dot" /> <span>Verification loop</span><strong>Demo</strong></div>
+           <div className="loop-status"><span className="live-dot" /> <span>Verification status</span><strong>Local</strong></div>
           <div className="sidebar-user">
             <span className="user-avatar">MC</span>
             <span><strong>Maya Chen</strong><small>Product engineering</small></span>
-            <button type="button" className="icon-button icon-button-small" aria-label="Open account menu" onClick={() => showNotice('Account actions are not connected in this demo.')}><Icon name="dots" size={16} /></button>
+            <button type="button" className="icon-button icon-button-small" aria-label="Open account menu" onClick={() => showNotice('Account actions are unavailable in this local workspace.')}><Icon name="dots" size={16} /></button>
           </div>
         </div>
       </aside>
@@ -875,14 +875,14 @@ function App() {
           <div className="mobile-brand"><span className="brand-orbit" aria-hidden="true"><span /></span><strong>loopline</strong></div>
           <div className="topbar-breadcrumb"><span>Launchpad</span><span className="breadcrumb-slash">/</span><strong>{activeView === 'runs' ? 'Test runs' : activeView[0].toUpperCase() + activeView.slice(1)}</strong></div>
           <div className="topbar-actions">
-            <span className="connection-note"><span className="live-dot" /> Demo environment</span>
-            <button type="button" className="topbar-icon" aria-label="Notifications" onClick={() => showNotice('No new notifications in the demo workspace.')}><Icon name="bell" size={17} /></button>
-            <button type="button" className="topbar-icon" aria-label="Open help" onClick={() => showNotice('Loopline keeps the failure close to its suggested fix.')}><span className="help-mark">?</span></button>
+            <span className="connection-note"><span className="live-dot" /> Local workspace</span>
+            <button type="button" className="topbar-icon" aria-label="Notifications" onClick={() => showNotice('No new notifications.')}><Icon name="bell" size={17} /></button>
+            <button type="button" className="topbar-icon" aria-label="Open help" onClick={() => showNotice('Open a verification bundle to review failed checks and suggested follow-up.')}><span className="help-mark">?</span></button>
           </div>
         </header>
 
         <div className="page-content">{renderPage()}</div>
-       <footer className="app-footer"><span><span className="footer-pulse" /> Loopline workspace</span><span>Local demo · no live integration</span></footer>
+       <footer className="app-footer"><span><span className="footer-pulse" /> Loopline workspace</span><span>Sample data · no live integration</span></footer>
       </main>
 
       {notice ? <div className="toast" role="status" aria-live="polite"><span className="toast-icon"><Icon name="check" size={15} /></span>{notice}</div> : null}
@@ -891,29 +891,29 @@ function App() {
         <div className="modal-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setFailureOpen(false) }}>
           <section className="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="failure-title" data-testid="failure-drawer">
             <div className="drawer-header">
-              <div><span className="drawer-kicker"><Icon name="alert" size={14} /> Verification bundle</span><h2 id="failure-title">A fix is within reach.</h2></div>
+              <div><span className="drawer-kicker"><Icon name="alert" size={14} /> Verification bundle</span><h2 id="failure-title">Review failed checks.</h2></div>
               <button type="button" className="icon-button" onClick={() => setFailureOpen(false)} aria-label="Close verification bundle"><Icon name="close" size={19} /></button>
             </div>
-            <p className="drawer-intro">Loopline grouped the failed signal, its likely cause, and the smallest safe next step for <strong>{selectedRelease?.version}</strong>.</p>
+            <p className="drawer-intro">This bundle groups the failed checks, likely cause, and suggested follow-up for <strong>{selectedRelease?.version}</strong>.</p>
             <div className="failure-context"><span className="failure-context-mark"><Icon name="pulse" size={17} /></span><span><strong>{selectedRelease?.name}</strong><small>{selectedRelease?.branch}</small></span><StatusPill status={selectedRelease?.status === 'passed' ? 'passed' : 'attention'} compact /></div>
             {selectedFailedChecks.length ? (
               <div className="failure-stack">
                 {selectedFailedChecks.map((check) => (
                   <article className="failure-card" key={check.name}>
-                    <div className="failure-card-heading"><span className="failure-card-icon"><Icon name="alert" size={15} /></span><strong>{check.name}</strong><span className="failure-pill">FLAGGED</span></div>
+                    <div className="failure-card-heading"><span className="failure-card-icon"><Icon name="alert" size={15} /></span><strong>{check.name}</strong><span className="failure-pill">FAILED</span></div>
                     <p>Checkout confirmation waited longer than the journey budget on the payment retry path.</p>
                     <div className="failure-code"><span>Suggested change</span><code>increase retry settle window to 1200ms</code></div>
                   </article>
                 ))}
               </div>
             ) : (
-              <div className="resolved-state"><span><Icon name="check" size={20} /></span><strong>Bundle resolved</strong><p>All checks are green. You can run the loop again whenever the release changes.</p></div>
+              <div className="resolved-state"><span><Icon name="check" size={20} /></span><strong>All checks passed</strong><p>Run verification again after the next release change.</p></div>
             )}
             <div className="drawer-footer">
               <div><span className="drawer-footer-label">Suggested action</span><span className="drawer-footer-copy">Apply the targeted fix, then verify the release again.</span></div>
               <button type="button" className="button button-primary" onClick={applySuggestedFix} disabled={!selectedFailedChecks.length} data-testid="apply-suggested-fix"><Icon name="wand" size={16} /> Apply suggested fix</button>
             </div>
-            <p className="drawer-disclaimer"><Icon name="shield" size={14} /> Demo action only · nothing is written to a codebase.</p>
+            <p className="drawer-disclaimer"><Icon name="shield" size={14} /> Local action only · no code is changed.</p>
           </section>
         </div>
       ) : null}
@@ -922,10 +922,10 @@ function App() {
         <div className="modal-layer modal-layer-centered" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setNewReleaseOpen(false) }}>
           <section className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="new-release-title" data-testid="new-release-modal">
             <div className="modal-header">
-              <div><span className="drawer-kicker"><Icon name="plus" size={14} /> Release setup</span><h2 id="new-release-title">Start a new loop.</h2></div>
+              <div><span className="drawer-kicker"><Icon name="plus" size={14} /> Release setup</span><h2 id="new-release-title">Add a release to verify.</h2></div>
               <button type="button" className="icon-button" onClick={() => setNewReleaseOpen(false)} aria-label="Close new release dialog"><Icon name="close" size={19} /></button>
             </div>
-            <p className="modal-intro">Give the release enough shape for Loopline to track its first verification.</p>
+            <p className="modal-intro">Enter the release name, version, and source branch.</p>
             <form className="release-form" onSubmit={createRelease} noValidate>
               <label className="form-field">
                 <span>Release name <b>*</b></span>
@@ -944,7 +944,7 @@ function App() {
                   {formErrors.branch ? <small id="branch-error" className="form-error">{formErrors.branch}</small> : null}
                 </label>
               </div>
-               <div className="form-hint"><Icon name="shield" size={14} /> Required fields create a queued release. No repository access is needed.</div>
+               <div className="form-hint"><Icon name="shield" size={14} /> Required fields add a queued release. No repository access is used.</div>
               <div className="modal-actions">
                 <button type="button" className="button button-quiet" onClick={() => setNewReleaseOpen(false)} data-testid="cancel-new-release">Cancel</button>
                 <button type="submit" className="button button-primary" data-testid="create-release"><Icon name="plus" size={16} /> Create release</button>
