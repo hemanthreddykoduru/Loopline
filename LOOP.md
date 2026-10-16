@@ -26,6 +26,7 @@ The live demo makes the loop legible without requiring a repository connection:
 | 1 | Added pinned runtime/dependencies, Dockerfile, Makefile, README, and GitHub Pages deployment. | Commits [`cde81ed`](https://github.com/hemanthreddykoduru/Loopline/commit/cde81ed), [`68eba84`](https://github.com/hemanthreddykoduru/Loopline/commit/68eba84), [`10f0801`](https://github.com/hemanthreddykoduru/Loopline/commit/10f0801) · [deploy workflow](.github/workflows/deploy-pages.yml) | Public URL returned HTTP 200; GitHub Actions deployment passed. |
 | 2 | Added the release-directory clear-filters path and opened the submission PR. | PR [#1](https://github.com/hemanthreddykoduru/Loopline/pull/1) · commit [`ff3bc1d`](https://github.com/hemanthreddykoduru/Loopline/commit/ff3bc1d) | PR build and deploy passed. |
 | 3 | Hardened motion performance and made the PR workflow run `make test` before deployment. | Commits [`441fbc0`](https://github.com/hemanthreddykoduru/Loopline/commit/441fbc0), [`d211fc1`](https://github.com/hemanthreddykoduru/Loopline/commit/d211fc1) | PR build, tests, and deploy passed. |
+| 4 | Reworked the product system for a more authored, production-ready finish: clearer copy, stronger navigation semantics, a skip link, reduced-transparency support, tactile states, system z-index tokens, metadata, and a branded favicon. | Commit [`6c7bfc1`](https://github.com/hemanthreddykoduru/Loopline/commit/6c7bfc1) · `make test` · `npm run build` | 4 local tests passed; production build passed. |
 
 ## TestSprite cloud evidence
 
