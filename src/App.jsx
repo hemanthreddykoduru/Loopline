@@ -608,8 +608,8 @@ function App() {
             </div>
             <span className="run-id">{selectedRelease.latestRun.id}</span>
           </div>
-          <div className="progress-track" aria-label={`${progress}% complete`}>
-            <span style={{ width: `${progress}%` }} />
+           <div className="progress-track" aria-label={`${progress}% complete`}>
+             <span style={{ '--progress': progress / 100 }} />
           </div>
           <div className="run-summary-foot">
             <span>{isRunning ? 'Running release gates' : isPassed ? 'Completed just now' : selectedRelease.latestRun.time}</span>
