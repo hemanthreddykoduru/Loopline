@@ -75,6 +75,8 @@ For a Vercel deployment, install the Vercel CLI locally or use the Vercel dashbo
 
 ## Hackathon execution checklist
 
+For the judge-facing story, see [SUBMISSION.md](SUBMISSION.md). For the evidence log, see [LOOP.md](LOOP.md). Both files distinguish completed local/GitHub evidence from pending TestSprite cloud results.
+
 1. Create a free TestSprite account with the same email used for submission.
 2. Create or use a public GitHub repository for this source.
 3. Deploy Loopline and keep the public URL live through judging.
