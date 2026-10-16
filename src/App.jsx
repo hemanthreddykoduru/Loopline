@@ -329,14 +329,14 @@ function CheckRow({ check }) {
 
 function PageHeading({ eyebrow, title, children, description }) {
   return (
-    <div className="page-heading">
+    <header className="page-heading">
       <div>
         <div className="eyebrow">{eyebrow}</div>
         <h1>{title}</h1>
         {description ? <p>{description}</p> : null}
       </div>
       {children ? <div className="page-heading-actions">{children}</div> : null}
-    </div>
+    </header>
   )
 }
 
@@ -589,7 +589,7 @@ function App() {
             <h2>{selectedRelease.name}</h2>
             <span className="detail-version">{selectedRelease.version} <span>·</span> {selectedRelease.owner}</span>
           </div>
-          <button type="button" className="icon-button" aria-label="More release options" title="More release options">
+           <button type="button" className="icon-button" aria-label="More release options" title="More release options" onClick={() => showNotice('Release actions are intentionally limited in this demo.')}>
             <Icon name="dots" size={18} />
           </button>
         </div>
@@ -683,7 +683,7 @@ function App() {
         <PageHeading
           eyebrow="Workspace / Overview"
           title="Ship the green build."
-          description="A self-testing release loop for catching the last mile before it reaches your users."
+          description="Track candidate releases from first check to sign-off, with failure context and the next action in view."
         >
           <button type="button" className="button button-secondary" onClick={() => showNotice('Loopline is running in demo mode.')}>
             <Icon name="shield" size={16} /> Demo mode
@@ -705,10 +705,10 @@ function App() {
           {renderDetailPanel()}
           {renderTimeline()}
           <section className="panel loop-panel">
-            <div className="panel-kicker">How the loop works</div>
-            <div className="loop-mark" aria-hidden="true"><span /><span /><span /><span /></div>
-            <h2>Observe. Verify. Improve.</h2>
-            <p>Loopline makes the release signal visible, then keeps the fix close to the failure.</p>
+             <div className="panel-kicker">Verification loop</div>
+             <div className="loop-mark" aria-hidden="true"><span /><span /><span /><span /></div>
+             <h2>Make the next release safer.</h2>
+             <p>Keep the signal, the cause, and the next action together until the release is ready.</p>
             <div className="loop-steps">
               <span><b>01</b> Detect</span>
               <span><b>02</b> Explain</span>
@@ -791,7 +791,7 @@ function App() {
         <PageHeading
           eyebrow="Workspace / Settings"
           title="Control the loop."
-          description="Shape how this demo reports signals, keeps history, and explains what happens next."
+          description="Shape how this workspace reports signals, keeps history, and explains what happens next."
         />
         <div className="settings-grid">
           <section className="panel settings-panel">
@@ -812,8 +812,8 @@ function App() {
           </section>
           <section className="panel settings-panel settings-about">
             <span className="about-badge"><Icon name="pulse" size={15} /> LOOPLINE / DEMO</span>
-            <h2>Self-testing, made legible.</h2>
-            <p>Loopline is a concept cockpit for a release loop that tests itself. It shows the decision surface without claiming a live integration.</p>
+             <h2>A clear release signal.</h2>
+             <p>Loopline keeps release evidence close to the decision it supports, without claiming a live repository connection.</p>
             <button type="button" className="button button-secondary" onClick={() => showNotice('No external services are connected in this demo.')}>
               <Icon name="external" size={15} /> About this demo
             </button>
@@ -832,6 +832,7 @@ function App() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">Skip to content</a>
       <aside className="sidebar" aria-label="Primary navigation">
         <div className="brand-lockup">
           <span className="brand-orbit" aria-hidden="true"><span /></span>
@@ -845,43 +846,43 @@ function App() {
         </button>
         <nav className="primary-nav">
           <span className="nav-label">Workspace</span>
-          <button type="button" className={`nav-item ${activeView === 'overview' ? 'nav-item-active' : ''}`} onClick={() => setActiveView('overview')} data-testid="nav-overview">
+          <button type="button" className={`nav-item ${activeView === 'overview' ? 'nav-item-active' : ''}`} onClick={() => setActiveView('overview')} aria-current={activeView === 'overview' ? 'page' : undefined} data-testid="nav-overview">
             <Icon name="grid" size={17} /> <span>Overview</span>
           </button>
-          <button type="button" className={`nav-item ${activeView === 'releases' ? 'nav-item-active' : ''}`} onClick={() => setActiveView('releases')} data-testid="nav-releases">
+          <button type="button" className={`nav-item ${activeView === 'releases' ? 'nav-item-active' : ''}`} onClick={() => setActiveView('releases')} aria-current={activeView === 'releases' ? 'page' : undefined} data-testid="nav-releases">
             <Icon name="layers" size={17} /> <span>Releases</span><span className="nav-badge">{releases.length}</span>
           </button>
-          <button type="button" className={`nav-item ${activeView === 'runs' ? 'nav-item-active' : ''}`} onClick={() => setActiveView('runs')} data-testid="nav-test-runs">
+          <button type="button" className={`nav-item ${activeView === 'runs' ? 'nav-item-active' : ''}`} onClick={() => setActiveView('runs')} aria-current={activeView === 'runs' ? 'page' : undefined} data-testid="nav-test-runs">
             <Icon name="flask" size={17} /> <span>Test runs</span>
           </button>
-          <span className="nav-label nav-label-spaced">Workspace</span>
-          <button type="button" className={`nav-item ${activeView === 'settings' ? 'nav-item-active' : ''}`} onClick={() => setActiveView('settings')} data-testid="nav-settings">
+           <span className="nav-label nav-label-spaced">Configure</span>
+          <button type="button" className={`nav-item ${activeView === 'settings' ? 'nav-item-active' : ''}`} onClick={() => setActiveView('settings')} aria-current={activeView === 'settings' ? 'page' : undefined} data-testid="nav-settings">
             <Icon name="settings" size={17} /> <span>Settings</span>
           </button>
         </nav>
-        <div className="sidebar-bottom">
-          <div className="loop-status"><span className="live-dot" /> <span>Self-testing loop</span><strong>Demo</strong></div>
+         <div className="sidebar-bottom">
+           <div className="loop-status"><span className="live-dot" /> <span>Verification loop</span><strong>Demo</strong></div>
           <div className="sidebar-user">
             <span className="user-avatar">MC</span>
             <span><strong>Maya Chen</strong><small>Product engineering</small></span>
-            <button type="button" className="icon-button icon-button-small" aria-label="Open account menu"><Icon name="dots" size={16} /></button>
+            <button type="button" className="icon-button icon-button-small" aria-label="Open account menu" onClick={() => showNotice('Account actions are not connected in this demo.')}><Icon name="dots" size={16} /></button>
           </div>
         </div>
       </aside>
 
-      <main className="main-content">
+      <main className="main-content" id="main-content" tabIndex="-1">
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-orbit" aria-hidden="true"><span /></span><strong>loopline</strong></div>
           <div className="topbar-breadcrumb"><span>Launchpad</span><span className="breadcrumb-slash">/</span><strong>{activeView === 'runs' ? 'Test runs' : activeView[0].toUpperCase() + activeView.slice(1)}</strong></div>
           <div className="topbar-actions">
             <span className="connection-note"><span className="live-dot" /> Demo environment</span>
-            <button type="button" className="topbar-icon" aria-label="Notifications" onClick={() => showNotice('No new notifications in the demo workspace.')}><Icon name="bell" size={17} /><span className="notification-dot" /></button>
+            <button type="button" className="topbar-icon" aria-label="Notifications" onClick={() => showNotice('No new notifications in the demo workspace.')}><Icon name="bell" size={17} /></button>
             <button type="button" className="topbar-icon" aria-label="Open help" onClick={() => showNotice('Loopline keeps the failure close to its suggested fix.')}><span className="help-mark">?</span></button>
           </div>
         </header>
 
         <div className="page-content">{renderPage()}</div>
-        <footer className="app-footer"><span><span className="footer-pulse" /> Loopline demo surface</span><span>Built for release confidence · no live integration</span></footer>
+       <footer className="app-footer"><span><span className="footer-pulse" /> Loopline workspace</span><span>Local demo · no live integration</span></footer>
       </main>
 
       {notice ? <div className="toast" role="status" aria-live="polite"><span className="toast-icon"><Icon name="check" size={15} /></span>{notice}</div> : null}
@@ -943,7 +944,7 @@ function App() {
                   {formErrors.branch ? <small id="branch-error" className="form-error">{formErrors.branch}</small> : null}
                 </label>
               </div>
-              <div className="form-hint"><Icon name="shield" size={14} /> Required fields create a queued demo release. No repository access is needed.</div>
+               <div className="form-hint"><Icon name="shield" size={14} /> Required fields create a queued release. No repository access is needed.</div>
               <div className="modal-actions">
                 <button type="button" className="button button-quiet" onClick={() => setNewReleaseOpen(false)} data-testid="cancel-new-release">Cancel</button>
                 <button type="submit" className="button button-primary" data-testid="create-release"><Icon name="plus" size={16} /> Create release</button>
