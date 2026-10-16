@@ -5,6 +5,8 @@ It turns the maker/checker loop into a small, legible product surface: select a 
 
 This build is intentionally a client-side demo. It does not claim a live GitHub, CI, or TestSprite connection; the public deployment is the surface that TestSprite explores and checks.
 
+The interface uses a light theme with neutral surfaces, green actions, and distinct success, warning, and failure states.
+
 ## Submission details
 
 - **Live URL:** https://hemanthreddykoduru.github.io/Loopline/
@@ -35,7 +37,7 @@ The single offline-friendly test command is:
 make test
 ```
 
-It runs the Node built-in test runner against the release filtering, form validation, queue creation, and resolution logic. The production build can be checked with:
+It runs the Node built-in test runner against release filtering, form validation, queue creation, and resolution logic, plus light-theme defaults and token-level contrast checks. These contrast checks cover representative text, status, and focus colours; they do not replace browser-rendered accessibility testing. The production build can be checked with:
 
 ```bash
 npm run build

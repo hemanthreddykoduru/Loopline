@@ -29,6 +29,7 @@ The live demo makes the loop legible without requiring a repository connection:
 | 4 | Reworked the product system for a more authored, production-ready finish: clearer copy, stronger navigation semantics, a skip link, reduced-transparency support, tactile states, system z-index tokens, metadata, and a branded favicon. | Commit [`6c7bfc1`](https://github.com/hemanthreddykoduru/Loopline/commit/6c7bfc1) · `make test` · `npm run build` | 4 local tests passed; production build passed. |
 | 5 | Replaced the green-heavy visual language with a graphite and cobalt system. Cobalt now carries brand and interaction emphasis; green is reserved for verified states, with amber and rose kept for their semantic meanings. Removed the decorative grid and simplified the verification mark. | Commit [`9dabf3c`](https://github.com/hemanthreddykoduru/Loopline/commit/9dabf3c) · `make test` · `npm run build` | 4 local tests passed; production build passed. |
 | 6 | Aligned the interface with the TestSprite Season 4 visual language: neutral `#131313` / `#181818` surfaces, green `#54B365` primary states, thin borders, 16px cards, compact mono metadata, and no gradients or glow effects. | Commit [`c65ab45`](https://github.com/hemanthreddykoduru/Loopline/commit/c65ab45) · `make test` · `npm run build` | 4 local tests passed; production build passed. |
+| 7 | Converted the entire interface to light mode, including drawers, dialogs, forms, disabled actions, status badges, browser theme colour, and favicon. Added offline light-theme and contrast regression checks. | [Theme tests](tests/theme.test.mjs) · `make test` · `npm run build` | 7 local tests passed; production build passed. Rendered browser checks remain unverified. |
 
 ## TestSprite cloud evidence
 
@@ -68,4 +69,5 @@ The generated suite should cover the observable product surface:
 
 - The app is a deterministic client-side demo; it does not pretend to write to GitHub or a CI system.
 - The public URL is the deployment under test. TestSprite is the external checker, not an app dependency.
+- Light-theme regression tests validate CSS tokens and representative contrast pairs, not rendered desktop/mobile layouts or complete browser accessibility.
 - The Docker image definition is present and reproducible; local Docker image execution remains to be verified once the Docker daemon is running.
