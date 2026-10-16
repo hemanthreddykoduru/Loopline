@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { createQueuedRelease, filterReleases, resolveChecks, validateReleaseForm } from './loopline.js'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createQueuedRelease, filterReleases, medianRunDuration, resolveChecks, validateReleaseForm } from './loopline.js'
 
 const initialReleases = [
   {
@@ -275,6 +275,91 @@ function StatusPill({ status, compact = false }) {
   )
 }
 
+function LocalDialog({ children, onClose, titleId, descriptionId, testId, drawer = false, initialFocus }) {
+  const panelRef = useRef(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
+  useLayoutEffect(() => {
+    const panel = panelRef.current
+    const layer = panel.parentElement
+    const opener = document.activeElement
+    const openerTestId = opener?.getAttribute('data-testid')
+    const previousOverflow = document.body.style.overflow
+    const background = [...layer.parentElement.children].filter((element) => element !== layer).map((element) => ({
+      element,
+      inert: element.getAttribute('inert'),
+      hidden: element.getAttribute('aria-hidden'),
+    }))
+    const focusable = () => [...panel.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+      .filter((element) => element.tabIndex >= 0 && !element.closest('[hidden], [inert]'))
+    const focusFirst = () => (panel.querySelector(initialFocus || '[data-dialog-initial-focus]') || focusable()[0] || panel).focus()
+    focusFirst()
+    document.body.style.overflow = 'hidden'
+    background.forEach(({ element }) => {
+      element.setAttribute('inert', '')
+      element.setAttribute('aria-hidden', 'true')
+    })
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        onCloseRef.current()
+      } else if (event.key === 'Tab') {
+        const targets = focusable()
+        const first = targets[0] || panel
+        const last = targets[targets.length - 1] || panel
+        if (!panel.contains(document.activeElement) || document.activeElement === panel || (!event.shiftKey && document.activeElement === last) || (event.shiftKey && document.activeElement === first)) {
+          event.preventDefault()
+          const target = event.shiftKey ? last : first
+          target.focus()
+        }
+      }
+    }
+    const onFocusIn = (event) => { if (!panel.contains(event.target)) focusFirst() }
+    document.addEventListener('keydown', onKeyDown, true)
+    document.addEventListener('focusin', onFocusIn)
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true)
+      document.removeEventListener('focusin', onFocusIn)
+      background.forEach(({ element, inert, hidden }) => {
+        if (inert === null) element.removeAttribute('inert')
+        else element.setAttribute('inert', inert)
+        if (hidden === null) element.removeAttribute('aria-hidden')
+        else element.setAttribute('aria-hidden', hidden)
+      })
+      document.body.style.overflow = previousOverflow
+      const fallback = openerTestId ? document.querySelector(`[data-testid="${openerTestId}"]`) : null
+      const target = opener?.isConnected ? opener : fallback || document.getElementById('main-content')
+      target?.focus()
+    }
+  }, [initialFocus])
+
+  return (
+    <div className={`modal-layer${drawer ? '' : ' modal-layer-centered'}`} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+      <section ref={panelRef} className={drawer ? 'drawer-panel' : 'modal-panel'} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} tabIndex={-1} data-testid={testId}>
+        {children}
+      </section>
+    </div>
+  )
+}
+
+function ActivityList({ items, testId }) {
+  return (
+    <ol className="activity-list" data-testid={testId}>
+      {items.map((item) => (
+        <li key={item.id} className="activity-item">
+          <span className={`activity-marker marker-${item.tone}`} aria-hidden="true" />
+          <div className="activity-copy"><strong>{item.title}</strong><span>{item.detail}</span></div>
+          <time dateTime={item.timestamp}>{item.time}</time>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
 function MetricCard({ label, value, detail, tone = 'neutral', icon }) {
   return (
     <article className={`metric-card metric-${tone}`}>
@@ -290,6 +375,10 @@ function MetricCard({ label, value, detail, tone = 'neutral', icon }) {
 
 function ReleaseCard({ release, selected, onSelect }) {
   const failedCount = release.checks.filter((check) => check.status === 'failed').length
+  const summary = release.status === 'queued' ? 'Waiting for verification'
+    : release.status === 'running' ? 'Verification in progress'
+      : failedCount ? `${failedCount} check${failedCount > 1 ? 's' : ''} failed`
+        : release.status === 'passed' ? 'All checks passed' : 'Review verification results'
   return (
     <button
       type="button"
@@ -306,21 +395,21 @@ function ReleaseCard({ release, selected, onSelect }) {
       <span className="release-card-name">{release.name}</span>
       <span className="release-card-branch"><Icon name="branch" size={13} /> {release.branch}</span>
       <span className="release-card-bottomline">
-        <span>{failedCount ? `${failedCount} check${failedCount > 1 ? 's' : ''} failed` : 'All checks passed'}</span>
-        <span>{release.lastVerified}</span>
+        <span>{summary}</span>
+        <span>{release.status === 'running' ? 'Local simulation' : release.lastVerified}</span>
       </span>
     </button>
   )
 }
 
 function CheckRow({ check }) {
-  const passed = check.status === 'passed'
+  const icon = { passed: 'check', failed: 'alert', queued: 'clock', running: 'pulse' }[check.status] || 'clock'
   return (
-    <li className={`check-row check-${check.status}`}>
-      <span className="check-icon" aria-hidden="true"><Icon name={passed ? 'check' : 'alert'} size={14} /></span>
+    <li className={`check-row check-${check.status}`} data-status={check.status}>
+      <span className="check-icon" aria-hidden="true"><Icon name={icon} size={14} /></span>
       <span className="check-copy">
         <strong>{check.name}</strong>
-        <span>{check.detail}</span>
+        <span><span className="sr-only">{statusCopy[check.status]?.label || 'Queued'}. </span>{check.detail}</span>
       </span>
       <span className="check-meta">{check.meta}</span>
     </li>
@@ -357,9 +446,7 @@ function App() {
   const [activeView, setActiveView] = useState('overview')
   const [releases, setReleases] = useState(initialReleases)
   const [selectedId, setSelectedId] = useState(initialReleases[0].id)
-  const [runState, setRunState] = useState(null)
-  const [failureOpen, setFailureOpen] = useState(false)
-  const [newReleaseOpen, setNewReleaseOpen] = useState(false)
+  const [dialog, setDialog] = useState(null)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [activity, setActivity] = useState(initialActivity)
@@ -367,13 +454,18 @@ function App() {
   const [form, setForm] = useState({ name: '', version: '', branch: '' })
   const [formErrors, setFormErrors] = useState({})
   const [autoArchive, setAutoArchive] = useState(true)
-  const [slackAlerts, setSlackAlerts] = useState(false)
-  const runTimerRef = useRef(null)
+  const [verificationNotices, setVerificationNotices] = useState(true)
+  const [notifications, setNotifications] = useState([])
+  const runTimersRef = useRef(new Map())
   const noticeTimerRef = useRef(null)
+  const sequenceRef = useRef(0)
+  const preferencesRef = useRef({ autoArchive, verificationNotices })
 
   const selectedRelease = releases.find((release) => release.id === selectedId) || releases[0]
-  const selectedRunStatus = runState || selectedRelease?.latestRun.status || 'queued'
+  const selectedRunStatus = selectedRelease?.latestRun.status || 'queued'
   const selectedFailedChecks = selectedRelease?.checks.filter((check) => check.status === 'failed') || []
+  const selectedIsRunning = selectedRunStatus === 'running'
+  const bundleIcon = selectedIsRunning ? 'pulse' : selectedRunStatus === 'queued' ? 'clock' : selectedFailedChecks.length ? 'alert' : 'shield'
 
   const filteredReleases = useMemo(() => {
     return filterReleases(releases, search, filter)
@@ -382,25 +474,24 @@ function App() {
   const passedCount = releases.filter((release) => release.status === 'passed').length
   const attentionCount = releases.filter((release) => release.status === 'attention').length
   const runningCount = releases.filter((release) => release.status === 'running').length
+  const medianDuration = medianRunDuration(releases.map((release) => release.latestRun))
 
   useEffect(() => {
+    const timers = runTimersRef.current
     return () => {
-      window.clearTimeout(runTimerRef.current)
+      timers.forEach((timer) => window.clearTimeout(timer))
+      timers.clear()
       window.clearTimeout(noticeTimerRef.current)
     }
   }, [])
 
   useEffect(() => {
-    if (!failureOpen && !newReleaseOpen) return undefined
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        setFailureOpen(false)
-        setNewReleaseOpen(false)
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [failureOpen, newReleaseOpen])
+    preferencesRef.current = { autoArchive, verificationNotices }
+  }, [autoArchive, verificationNotices])
+
+  function nextId(prefix) {
+    return `${prefix}-${Date.now()}-${++sequenceRef.current}`
+  }
 
   function showNotice(message) {
     setNotice(message)
@@ -409,7 +500,17 @@ function App() {
   }
 
   function addActivity(entry) {
-    setActivity((current) => [{ ...entry, id: `${entry.id}-${Date.now()}` }, ...current].slice(0, 6))
+    const timestamp = new Date().toISOString()
+    const item = { ...entry, id: nextId('activity'), timestamp, time: new Date(timestamp).toLocaleString() }
+    setActivity((current) => [item, ...current])
+  }
+
+  function notifyVerification(message, tone = 'success') {
+    if (!preferencesRef.current.verificationNotices) return
+    const timestamp = new Date().toISOString()
+    const item = { id: nextId('notification'), title: message, detail: 'Local simulation · no external notification sent.', tone, timestamp, time: new Date(timestamp).toLocaleString() }
+    setNotifications((current) => [item, ...current])
+    showNotice(message)
   }
 
   function updateRelease(releaseId, updater) {
@@ -417,67 +518,73 @@ function App() {
   }
 
   function selectRelease(releaseId) {
-    if (runState === 'running') return
     setSelectedId(releaseId)
-    setRunState(null)
   }
 
   function runVerification() {
-    if (!selectedRelease || runState === 'running') return
+    if (!selectedRelease || selectedIsRunning || runTimersRef.current.has(selectedRelease.id)) return
     const releaseId = selectedRelease.id
-    setRunState('running')
+    const startedAt = new Date().toISOString()
+    const runId = nextId('run')
     updateRelease(releaseId, (release) => ({
       ...release,
       status: 'running',
-      latestRun: { ...release.latestRun, status: 'running', time: 'just now' },
+      duration: '—',
+      latestRun: { id: runId, status: 'running', trigger: 'Manual (demo)', duration: '—', startedAt, time: new Date(startedAt).toLocaleString(), archived: false },
+      checks: release.checks.map((check) => ({ ...check, status: 'running', detail: 'Running in local simulation', meta: '—' })),
     }))
     addActivity({
       tone: 'amber',
       title: `${selectedRelease.name} is verifying`,
-      detail: 'Release checks are running.',
-      time: 'just now',
+      detail: 'Simulated release checks are running in this browser.',
     })
-    showNotice(`Verification started for ${selectedRelease.version}`)
-    window.clearTimeout(runTimerRef.current)
-    runTimerRef.current = window.setTimeout(() => {
-      setRunState('passed')
+    notifyVerification(`Verification started for ${selectedRelease.version} (local simulation)`, 'amber')
+    const timer = window.setTimeout(() => {
+      runTimersRef.current.delete(releaseId)
+      const completedAt = new Date().toISOString()
+      const time = new Date(completedAt).toLocaleString()
+      const elapsed = Math.max(0, Math.round((Date.parse(completedAt) - Date.parse(startedAt)) / 1000))
+      const duration = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`
+      const archived = preferencesRef.current.autoArchive
       updateRelease(releaseId, (release) => ({
         ...release,
         status: 'passed',
-        lastVerified: 'just now',
-        duration: '02:41',
-        latestRun: { ...release.latestRun, status: 'passed', duration: '02:41', time: 'just now' },
-         checks: resolveChecks(release.checks),
+        lastVerified: time,
+        duration,
+        latestRun: { ...release.latestRun, status: 'passed', duration, completedAt, time, archived },
+        checks: resolveChecks(release.checks),
       }))
       addActivity({
         tone: 'success',
         title: `${selectedRelease.name} verified`,
-        detail: 'All release checks passed.',
-        time: 'just now',
+        detail: `All simulated checks passed. Bundle ${archived ? 'archived' : 'not archived'} in this session.`,
       })
-      showNotice(`${selectedRelease.version} is verified and ready for release`)
+      notifyVerification(`${selectedRelease.version} passed the local verification simulation`)
     }, 2200)
+    runTimersRef.current.set(releaseId, timer)
   }
 
   function applySuggestedFix() {
-    if (!selectedRelease) return
+    if (!selectedRelease || selectedIsRunning || runTimersRef.current.has(selectedRelease.id) || !selectedFailedChecks.length) return
     const releaseId = selectedRelease.id
+    const completedAt = new Date().toISOString()
+    const time = new Date(completedAt).toLocaleString()
+    const runId = nextId('run')
     updateRelease(releaseId, (release) => ({
       ...release,
       status: 'passed',
-      lastVerified: 'just now',
-      latestRun: { ...release.latestRun, status: 'passed', time: 'just now' },
-       checks: resolveChecks(release.checks),
+      lastVerified: time,
+      duration: '—',
+      latestRun: { id: runId, status: 'passed', trigger: 'Suggested fix (demo)', duration: '—', completedAt, time, archived: preferencesRef.current.autoArchive },
+      checks: resolveChecks(release.checks),
     }))
-    setRunState('passed')
-    setFailureOpen(false)
+    setDialog(null)
     addActivity({
       tone: 'success',
       title: `Suggested fix applied to ${selectedRelease.name}`,
-      detail: 'The failed browser journeys now pass.',
-      time: 'just now',
+      detail: 'The sample failed checks are marked passed. No source code was changed.',
     })
-    showNotice('Suggested fix applied. Release marked verified.')
+    showNotice('Suggested fix simulated. Sample release marked verified; no code changed.')
   }
 
   function updateForm(field, value) {
@@ -489,15 +596,18 @@ function App() {
     event.preventDefault()
     const errors = validateReleaseForm(form)
     setFormErrors(errors)
-    if (Object.keys(errors).length) return
+    if (Object.keys(errors).length) {
+      document.querySelector(`[data-testid="new-release-${Object.keys(errors)[0]}"]`)?.focus()
+      return
+    }
 
-    const timestamp = Date.now()
-    const id = `release-${timestamp}`
-    const newRelease = createQueuedRelease(form, { id, runId: `run-${timestamp}` })
+    const id = nextId('release')
+    const newRelease = createQueuedRelease(form, { id, runId: nextId('run') })
     setReleases((current) => [newRelease, ...current])
     setSelectedId(id)
-    setRunState(null)
-    setNewReleaseOpen(false)
+    setSearch('')
+    setFilter('all')
+    setDialog(null)
     setForm({ name: '', version: '', branch: '' })
     setFormErrors({})
     setActiveView('releases')
@@ -505,14 +615,13 @@ function App() {
       tone: 'amber',
       title: `${newRelease.name} added to releases`,
       detail: `${newRelease.version} is ready for its first verification.`,
-      time: 'just now',
     })
     showNotice(`${newRelease.version} added. Run verification when ready.`)
   }
 
   function openNewRelease() {
     setFormErrors({})
-    setNewReleaseOpen(true)
+    setDialog('new-release')
   }
 
   function renderReleaseDirectory({ compact = false } = {}) {
@@ -576,20 +685,21 @@ function App() {
     if (!selectedRelease) return null
     const isRunning = selectedRunStatus === 'running'
     const isPassed = selectedRunStatus === 'passed'
-    const progress = isRunning ? 48 : isPassed ? 100 : selectedRunStatus === 'failed' ? 72 : 12
+    const completedCount = selectedRelease.checks.filter((check) => ['passed', 'failed'].includes(check.status)).length
+    const progress = selectedRelease.checks.length ? completedCount / selectedRelease.checks.length : 0
     const failedCount = selectedRelease.checks.filter((check) => check.status === 'failed').length
     return (
       <section className={`panel detail-panel ${standalone ? 'detail-panel-standalone' : ''}`} data-testid="selected-release">
         <div className="detail-topline">
           <div className="panel-kicker">Selected release</div>
-          <StatusPill status={selectedRelease.status === 'running' || isRunning ? 'running' : isPassed ? 'passed' : selectedRelease.status} />
+          <StatusPill status={selectedRelease.status} />
         </div>
         <div className="detail-title-row">
           <div>
             <h2>{selectedRelease.name}</h2>
             <span className="detail-version">{selectedRelease.version} <span>·</span> {selectedRelease.owner}</span>
           </div>
-           <button type="button" className="icon-button" aria-label="More release options" title="More release options" onClick={() => showNotice('Release actions are unavailable without a live integration.')}>
+           <button type="button" className="icon-button" aria-label="Release information" title="Release information" onClick={() => setDialog('release-info')} data-testid="release-info-button" aria-haspopup="dialog">
             <Icon name="dots" size={18} />
           </button>
         </div>
@@ -608,12 +718,21 @@ function App() {
             </div>
             <span className="run-id">{selectedRelease.latestRun.id}</span>
           </div>
-           <div className="progress-track" aria-label={`${progress}% complete`}>
-             <span style={{ '--progress': progress / 100 }} />
+           <div
+             className="progress-track"
+             role="progressbar"
+             aria-label="Release verification progress"
+             aria-valuemin={0}
+             aria-valuemax={selectedRelease.checks.length}
+             aria-valuenow={isRunning ? undefined : completedCount}
+             aria-valuetext={isRunning ? 'Local simulation running; completion is indeterminate.' : `${completedCount} of ${selectedRelease.checks.length} checks completed.`}
+             data-testid="verification-progress"
+           >
+             <span style={{ '--progress': progress }} />
           </div>
           <div className="run-summary-foot">
-            <span>{isRunning ? 'Running release gates' : isPassed ? 'Completed just now' : selectedRelease.latestRun.time}</span>
-            <span>{isRunning ? 'Estimating 2–4 min' : selectedRelease.duration === '—' ? 'No run yet' : selectedRelease.duration}</span>
+            <span>{isRunning ? 'Simulated local verification' : isPassed ? `Completed ${selectedRelease.latestRun.time}` : selectedRunStatus === 'queued' ? 'No verification yet' : `Last run ${selectedRelease.latestRun.time}`}</span>
+            <span>{isRunning ? 'About 2 seconds · demo' : selectedRelease.duration === '—' ? (selectedRunStatus === 'queued' ? 'No run yet' : 'No measured run') : selectedRelease.duration}</span>
           </div>
         </div>
 
@@ -628,8 +747,8 @@ function App() {
             <Icon name={isRunning ? 'pulse' : 'play'} size={16} />
             {isRunning ? 'Running verification' : isPassed ? 'Run again' : 'Run verification'}
           </button>
-          <button type="button" className="button button-secondary" onClick={() => setFailureOpen(true)} data-testid="failure-bundle-button">
-            <Icon name="alert" size={16} />
+          <button type="button" className="button button-secondary" onClick={() => setDialog('bundle')} data-testid="failure-bundle-button" aria-haspopup="dialog">
+            <Icon name={bundleIcon} size={16} />
             {failedCount ? `Failure bundle · ${failedCount}` : 'View verification bundle'}
           </button>
         </div>
@@ -657,22 +776,11 @@ function App() {
             <div className="panel-kicker">Activity log</div>
             <h2>Recent activity</h2>
           </div>
-          <button type="button" className="text-button" onClick={() => showNotice('The full activity stream is unavailable without a live integration.')}>
+          <button type="button" className="text-button" onClick={() => setDialog('activity')} data-testid="view-all-activity" aria-haspopup="dialog">
             View all <Icon name="arrow" size={14} />
           </button>
         </div>
-        <ol className="activity-list">
-          {activity.slice(0, 5).map((item) => (
-            <li key={item.id} className="activity-item">
-              <span className={`activity-marker marker-${item.tone}`} aria-hidden="true" />
-              <div className="activity-copy">
-                <strong>{item.title}</strong>
-                <span>{item.detail}</span>
-              </div>
-              <time>{item.time}</time>
-            </li>
-          ))}
-        </ol>
+        <ActivityList items={activity.slice(0, 5)} testId="recent-activity-list" />
       </section>
     )
   }
@@ -685,7 +793,7 @@ function App() {
           title="Release verification"
           description="Review checks, failures, and sign-off status for each candidate release."
         >
-          <button type="button" className="button button-secondary" onClick={() => showNotice('This workspace uses sample data; no live integration is connected.')}>
+          <button type="button" className="button button-secondary" onClick={() => setDialog('integration-status')} data-testid="sample-data-button" aria-haspopup="dialog">
             <Icon name="shield" size={16} /> Sample data
           </button>
           <button type="button" className="button button-primary" onClick={openNewRelease} data-testid="new-release-button">
@@ -697,7 +805,7 @@ function App() {
           <MetricCard label="Verified releases" value={passedCount} detail="all configured checks passed" tone="success" icon="check" />
           <MetricCard label="Needs attention" value={attentionCount} detail="failed checks requiring review" tone="rose" icon="alert" />
           <MetricCard label="Active verifications" value={runningCount || '—'} detail={runningCount ? 'verification in progress' : 'no verification running'} tone="amber" icon="pulse" />
-          <MetricCard label="Median run" value="03:14" detail="based on listed runs" tone="neutral" icon="clock" />
+          <MetricCard label="Median run" value={medianDuration} detail="valid completed listed runs" tone="neutral" icon="clock" />
         </section>
 
         <div className="dashboard-grid">
@@ -767,7 +875,7 @@ function App() {
                 type="button"
                 className="run-row"
                 key={run.id}
-                onClick={() => { setSelectedId(run.release.id); setRunState(null); setActiveView('releases') }}
+                onClick={() => { setSelectedId(run.release.id); setActiveView('releases') }}
                 data-testid={`run-row-${run.id}`}
               >
                 <span className="run-row-status"><StatusPill status={run.status} compact /></span>
@@ -791,7 +899,7 @@ function App() {
         <PageHeading
           eyebrow="Workspace / Settings"
           title="Verification settings"
-          description="Configure how this workspace reports results, retains history, and handles follow-up."
+          description="Configure local simulation notices and bundle archive markers for this browser session."
         />
         <div className="settings-grid">
           <section className="panel settings-panel">
@@ -800,12 +908,12 @@ function App() {
             <p className="panel-description">These settings apply only in this browser session and do not connect to a repository.</p>
             <div className="settings-list">
               <label className="setting-row">
-                <span><strong>Archive successful bundles</strong><small>Retain verification evidence for each release.</small></span>
+                <span><strong>Archive successful bundles</strong><small>Mark new successful demo bundles archived in this session.</small></span>
                 <input type="checkbox" checked={autoArchive} onChange={(event) => setAutoArchive(event.target.checked)} data-testid="setting-auto-archive" />
               </label>
               <label className="setting-row">
-                <span><strong>Notify on attention</strong><small>Show a local alert when a check fails.</small></span>
-                <input type="checkbox" checked={slackAlerts} onChange={(event) => setSlackAlerts(event.target.checked)} data-testid="setting-alerts" />
+                <span><strong>Verification notifications</strong><small>Show local start and completion notices; nothing is sent externally.</small></span>
+                <input type="checkbox" checked={verificationNotices} onChange={(event) => setVerificationNotices(event.target.checked)} data-testid="setting-alerts" />
               </label>
             </div>
             <div className="settings-note"><Icon name="shield" size={15} /> Settings are saved for this session only; no external service is connected.</div>
@@ -814,12 +922,69 @@ function App() {
             <span className="about-badge"><Icon name="pulse" size={15} /> LOOPLINE / LOCAL</span>
             <h2>About this workspace</h2>
             <p>This workspace displays sample release data. No repository or CI connection is active.</p>
-            <button type="button" className="button button-secondary" onClick={() => showNotice('No external services are connected.')}>
+            <button type="button" className="button button-secondary" onClick={() => setDialog('integration-status')} data-testid="integration-status-button" aria-haspopup="dialog">
               <Icon name="external" size={15} /> Integration status
             </button>
           </section>
         </div>
       </>
+    )
+  }
+
+  function renderInfoDialog() {
+    const content = {
+      'workspace-info': {
+        title: 'Workspace information',
+        description: 'Launchpad is a local sample workspace. Changes stay in memory for this browser session and reset on reload.',
+        details: [['Workspace', 'Launchpad'], ['Releases', `${releases.length} candidates · ${runningCount} running`], ['Verification', 'Simulated locally; no repository or CI connection'], ['Storage', 'This browser session only']],
+      },
+      'account-info': {
+        title: 'Account information',
+        description: 'This is a sample profile, not an authenticated account. New release candidates are owned by “You”.',
+        details: [['Sample profile', 'Maya Chen'], ['Team', 'Product engineering'], ['Workspace', 'Launchpad · local demo'], ['Sign-in', 'No account or external identity service connected']],
+      },
+      'release-info': {
+        title: 'Release information',
+        description: 'Metadata for the selected local candidate. Sample commits and verification results are not fetched from a repository.',
+        details: selectedRelease ? [['Release', `${selectedRelease.name} · ${selectedRelease.version}`], ['Status', statusCopy[selectedRelease.status].label], ['Owner', selectedRelease.owner], ['Branch', selectedRelease.branch], ['Commit', selectedRelease.commit === 'pending' ? 'Awaiting commit · no repository connected' : selectedRelease.commit], ['Created', selectedRelease.created], ['Latest run', `${selectedRelease.latestRun.id} · ${statusCopy[selectedRunStatus].label}`], ['Run time', selectedRunStatus === 'queued' ? 'Not run yet' : selectedRelease.latestRun.time], ['Bundle archive', selectedRelease.latestRun.archived ? 'Archived in this session' : 'Not archived in this session']] : [],
+      },
+      'integration-status': {
+        title: 'Integration status',
+        description: 'Loopline is a client-side demonstration. These status details describe the local demo; no external service is contacted.',
+        details: [['Repository', 'Not connected'], ['CI provider', 'Not connected'], ['TestSprite', 'Not connected'], ['Verification engine', 'Local 2.2-second simulation; sample checks only'], ['Notifications', 'Local notices only; no email or Slack messages'], ['Persistence', 'Browser memory only; reload resets local changes']],
+      },
+      help: {
+        title: 'Loopline help',
+        description: 'Explore a release-verification flow with local sample data. No source code changes, deployments, or external checks are performed.',
+        details: [['1 · Review', 'Select a release, inspect its check states, and open its verification bundle.'], ['2 · Resolve', 'For failed sample checks, Apply suggested fix simulates a resolution without changing code.'], ['3 · Verify', 'Run a short local simulation. You can navigate or create another candidate while it runs.'], ['Keyboard', 'Tab and Shift+Tab stay inside dialogs. Escape, Close, and the backdrop dismiss them and return focus.'], ['Preferences', 'Settings control local verification notices and archive markers for new successful bundles.']],
+      },
+      notifications: {
+        title: 'Notifications',
+        description: 'Retained verification start and completion notices from this browser session. Nothing is sent to an external service.',
+        details: [['Verification notifications', verificationNotices ? 'Enabled for local start and completion notices' : 'Disabled; new verification notices are muted'], ['Retained notices', String(notifications.length)]],
+      },
+      activity: {
+        title: 'All local activity',
+        description: 'The complete retained activity log: initial sample entries and every action recorded in this browser session. Reloading resets the log.',
+        details: [['Retained entries', String(activity.length)], ['Scope', 'Local sample workspace only']],
+      },
+    }[dialog]
+    if (!content) return null
+
+    return (
+      <LocalDialog key={dialog} onClose={() => setDialog(null)} titleId="info-dialog-title" descriptionId="info-dialog-intro" testId={`${dialog}-dialog`}>
+        <div className="modal-header">
+          <div><span className="drawer-kicker"><Icon name="shield" size={14} /> Local workspace</span><h2 id="info-dialog-title">{content.title}</h2></div>
+          <button type="button" className="icon-button" onClick={() => setDialog(null)} aria-label={`Close ${content.title.toLowerCase()}`} data-testid={`${dialog}-dialog-close`}><Icon name="close" size={19} /></button>
+        </div>
+        <p className="modal-intro" id="info-dialog-intro">{content.description}</p>
+        <dl className="info-details">
+          {content.details.map(([term, value]) => <div key={term}><dt>{term}</dt><dd>{value}</dd></div>)}
+        </dl>
+        {dialog === 'activity' ? <ActivityList items={activity} testId="all-activity-list" /> : null}
+        {dialog === 'notifications' ? notifications.length ? <ActivityList items={notifications} testId="notifications-list" /> : <p className="modal-intro" data-testid="notifications-empty">No local verification notices yet.</p> : null}
+        <div className="modal-actions"><button type="button" className="button button-primary" onClick={() => setDialog(null)} data-testid={`${dialog}-dialog-done`}>Done</button></div>
+      </LocalDialog>
     )
   }
 
@@ -839,7 +1004,7 @@ function App() {
           <span className="brand-name">loopline</span>
           <span className="brand-version">v0.1</span>
         </div>
-        <button type="button" className="workspace-switcher" onClick={() => showNotice('You are viewing a local sample workspace.')}>
+        <button type="button" className="workspace-switcher" onClick={() => setDialog('workspace-info')} aria-label="Workspace information" data-testid="workspace-info-button" aria-haspopup="dialog">
           <span className="workspace-avatar">L</span>
           <span className="workspace-copy"><strong>Launchpad</strong><small>Local workspace</small></span>
           <Icon name="chevron" size={15} />
@@ -865,7 +1030,7 @@ function App() {
           <div className="sidebar-user">
             <span className="user-avatar">MC</span>
             <span><strong>Maya Chen</strong><small>Product engineering</small></span>
-            <button type="button" className="icon-button icon-button-small" aria-label="Open account menu" onClick={() => showNotice('Account actions are unavailable in this local workspace.')}><Icon name="dots" size={16} /></button>
+            <button type="button" className="icon-button icon-button-small" aria-label="Account information" onClick={() => setDialog('account-info')} data-testid="account-info-button" aria-haspopup="dialog"><Icon name="dots" size={16} /></button>
           </div>
         </div>
       </aside>
@@ -876,8 +1041,8 @@ function App() {
           <div className="topbar-breadcrumb"><span>Launchpad</span><span className="breadcrumb-slash">/</span><strong>{activeView === 'runs' ? 'Test runs' : activeView[0].toUpperCase() + activeView.slice(1)}</strong></div>
           <div className="topbar-actions">
             <span className="connection-note"><span className="live-dot" /> Local workspace</span>
-            <button type="button" className="topbar-icon" aria-label="Notifications" onClick={() => showNotice('No new notifications.')}><Icon name="bell" size={17} /></button>
-            <button type="button" className="topbar-icon" aria-label="Open help" onClick={() => showNotice('Open a verification bundle to review failed checks and suggested follow-up.')}><span className="help-mark">?</span></button>
+            <button type="button" className="topbar-icon" aria-label="Notifications" onClick={() => setDialog('notifications')} data-testid="notifications-button" aria-haspopup="dialog"><Icon name="bell" size={17} /></button>
+            <button type="button" className="topbar-icon" aria-label="Open help" onClick={() => setDialog('help')} data-testid="help-button" aria-haspopup="dialog"><span className="help-mark">?</span></button>
           </div>
         </header>
 
@@ -885,18 +1050,20 @@ function App() {
        <footer className="app-footer"><span><span className="footer-pulse" /> Loopline workspace</span><span>Sample data · no live integration</span></footer>
       </main>
 
-      {notice ? <div className="toast" role="status" aria-live="polite"><span className="toast-icon"><Icon name="check" size={15} /></span>{notice}</div> : null}
+      {notice ? <div className="toast" role="status" aria-live="polite" data-testid="local-notice"><span className="toast-icon"><Icon name="check" size={15} /></span>{notice}</div> : null}
 
-      {failureOpen ? (
-        <div className="modal-layer" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setFailureOpen(false) }}>
-          <section className="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="failure-title" data-testid="failure-drawer">
+      {renderInfoDialog()}
+
+      {dialog === 'bundle' ? (
+        <LocalDialog drawer onClose={() => setDialog(null)} titleId="failure-title" descriptionId="bundle-intro" testId="failure-drawer">
             <div className="drawer-header">
-              <div><span className="drawer-kicker"><Icon name="alert" size={14} /> Verification bundle</span><h2 id="failure-title">Review failed checks.</h2></div>
-              <button type="button" className="icon-button" onClick={() => setFailureOpen(false)} aria-label="Close verification bundle"><Icon name="close" size={19} /></button>
+              <div><span className="drawer-kicker"><Icon name={bundleIcon} size={14} /> Verification bundle</span><h2 id="failure-title" data-testid="bundle-status">{selectedIsRunning ? 'Verification in progress.' : selectedRunStatus === 'queued' ? 'Waiting for verification.' : selectedFailedChecks.length ? 'Review failed checks.' : 'All checks passed.'}</h2></div>
+              <button type="button" className="icon-button" onClick={() => setDialog(null)} aria-label="Close verification bundle" data-testid="close-verification-bundle"><Icon name="close" size={19} /></button>
             </div>
-            <p className="drawer-intro">This bundle groups the failed checks, likely cause, and suggested follow-up for <strong>{selectedRelease?.version}</strong>.</p>
-            <div className="failure-context"><span className="failure-context-mark"><Icon name="pulse" size={17} /></span><span><strong>{selectedRelease?.name}</strong><small>{selectedRelease?.branch}</small></span><StatusPill status={selectedRelease?.status === 'passed' ? 'passed' : 'attention'} compact /></div>
-            {selectedFailedChecks.length ? (
+            <p className="drawer-intro" id="bundle-intro">Local sample verification state and suggested follow-up for <strong>{selectedRelease?.version}</strong>. No repository or CI connection is active.</p>
+            <div className="failure-context" data-status={selectedRunStatus}><span className="failure-context-mark"><Icon name={bundleIcon} size={17} /></span><span><strong>{selectedRelease?.name}</strong><small>{selectedRelease?.branch}</small></span><StatusPill status={selectedRelease?.status} compact /></div>
+            <p className="drawer-intro" data-testid="bundle-archive-status">{selectedRelease?.latestRun.archived ? 'Bundle archived in this session.' : 'Bundle not archived in this session.'}</p>
+            {selectedFailedChecks.length && !selectedIsRunning ? (
               <div className="failure-stack">
                 {selectedFailedChecks.map((check) => (
                   <article className="failure-card" key={check.name}>
@@ -907,51 +1074,52 @@ function App() {
                 ))}
               </div>
             ) : (
-              <div className="resolved-state"><span><Icon name="check" size={20} /></span><strong>All checks passed</strong><p>Run verification again after the next release change.</p></div>
+              <div className={`resolved-state${selectedIsRunning ? ' resolved-state-running' : selectedRunStatus === 'queued' ? ' resolved-state-pending' : ''}`}>
+                <span><Icon name={selectedIsRunning ? 'pulse' : selectedRunStatus === 'queued' ? 'clock' : 'check'} size={20} /></span>
+                <strong>{selectedIsRunning ? 'Verification in progress' : selectedRunStatus === 'queued' ? 'Waiting for verification' : 'All checks passed'}</strong>
+                <p>{selectedIsRunning ? 'A local simulation is running. Results will appear when it finishes.' : selectedRunStatus === 'queued' ? 'No checks have run for this candidate. Start verification from the release panel.' : `Completed ${selectedRelease?.latestRun.time}. Run again after the next release change.`}</p>
+              </div>
             )}
             <div className="drawer-footer">
-              <div><span className="drawer-footer-label">Suggested action</span><span className="drawer-footer-copy">Apply the targeted fix, then verify the release again.</span></div>
-              <button type="button" className="button button-primary" onClick={applySuggestedFix} disabled={!selectedFailedChecks.length} data-testid="apply-suggested-fix"><Icon name="wand" size={16} /> Apply suggested fix</button>
+              <div><span className="drawer-footer-label">Suggested action</span><span className="drawer-footer-copy">{selectedIsRunning ? 'Wait for this simulated run to finish.' : selectedFailedChecks.length ? 'Simulate resolving the failed checks, then run verification again.' : selectedRunStatus === 'queued' ? 'Run verification to create a sample result.' : 'Review the sample result or run verification again.'}</span></div>
+              <button type="button" className="button button-primary" onClick={applySuggestedFix} disabled={selectedIsRunning || !selectedFailedChecks.length} data-testid="apply-suggested-fix"><Icon name="wand" size={16} /> Apply suggested fix</button>
             </div>
             <p className="drawer-disclaimer"><Icon name="shield" size={14} /> Local action only · no code is changed.</p>
-          </section>
-        </div>
+        </LocalDialog>
       ) : null}
 
-      {newReleaseOpen ? (
-        <div className="modal-layer modal-layer-centered" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setNewReleaseOpen(false) }}>
-          <section className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="new-release-title" data-testid="new-release-modal">
+      {dialog === 'new-release' ? (
+        <LocalDialog onClose={() => setDialog(null)} titleId="new-release-title" descriptionId="new-release-intro" testId="new-release-modal" initialFocus={'[data-testid="new-release-name"]'}>
             <div className="modal-header">
               <div><span className="drawer-kicker"><Icon name="plus" size={14} /> Release setup</span><h2 id="new-release-title">Add a release to verify.</h2></div>
-              <button type="button" className="icon-button" onClick={() => setNewReleaseOpen(false)} aria-label="Close new release dialog"><Icon name="close" size={19} /></button>
+              <button type="button" className="icon-button" onClick={() => setDialog(null)} aria-label="Close new release dialog" data-testid="close-new-release"><Icon name="close" size={19} /></button>
             </div>
-            <p className="modal-intro">Enter the release name, version, and source branch.</p>
+            <p className="modal-intro" id="new-release-intro">Enter the release name, version, and source branch.</p>
             <form className="release-form" onSubmit={createRelease} noValidate>
               <label className="form-field">
                 <span>Release name <b>*</b></span>
-                <input type="text" value={form.name} onChange={(event) => updateForm('name', event.target.value)} placeholder="e.g. Billing portal" autoComplete="off" aria-invalid={Boolean(formErrors.name)} aria-describedby={formErrors.name ? 'name-error' : undefined} data-testid="new-release-name" />
+                <input type="text" required value={form.name} onChange={(event) => updateForm('name', event.target.value)} placeholder="e.g. Billing portal" autoComplete="off" aria-invalid={Boolean(formErrors.name)} aria-describedby={formErrors.name ? 'name-error' : undefined} data-testid="new-release-name" />
                 {formErrors.name ? <small id="name-error" className="form-error">{formErrors.name}</small> : null}
               </label>
               <div className="form-grid">
                 <label className="form-field">
                   <span>Version <b>*</b></span>
-                  <input type="text" value={form.version} onChange={(event) => updateForm('version', event.target.value)} placeholder="e.g. v2.19.0" autoComplete="off" aria-invalid={Boolean(formErrors.version)} aria-describedby={formErrors.version ? 'version-error' : undefined} data-testid="new-release-version" />
+                  <input type="text" required value={form.version} onChange={(event) => updateForm('version', event.target.value)} placeholder="e.g. v2.19.0" autoComplete="off" aria-invalid={Boolean(formErrors.version)} aria-describedby={formErrors.version ? 'version-error' : undefined} data-testid="new-release-version" />
                   {formErrors.version ? <small id="version-error" className="form-error">{formErrors.version}</small> : null}
                 </label>
                 <label className="form-field">
                   <span>Source branch <b>*</b></span>
-                  <input type="text" value={form.branch} onChange={(event) => updateForm('branch', event.target.value)} placeholder="release/..." autoComplete="off" aria-invalid={Boolean(formErrors.branch)} aria-describedby={formErrors.branch ? 'branch-error' : undefined} data-testid="new-release-branch" />
+                  <input type="text" required value={form.branch} onChange={(event) => updateForm('branch', event.target.value)} placeholder="release/..." autoComplete="off" aria-invalid={Boolean(formErrors.branch)} aria-describedby={formErrors.branch ? 'branch-error' : undefined} data-testid="new-release-branch" />
                   {formErrors.branch ? <small id="branch-error" className="form-error">{formErrors.branch}</small> : null}
                 </label>
               </div>
                <div className="form-hint"><Icon name="shield" size={14} /> Required fields add a queued release. No repository access is used.</div>
               <div className="modal-actions">
-                <button type="button" className="button button-quiet" onClick={() => setNewReleaseOpen(false)} data-testid="cancel-new-release">Cancel</button>
+                <button type="button" className="button button-quiet" onClick={() => setDialog(null)} data-testid="cancel-new-release">Cancel</button>
                 <button type="submit" className="button button-primary" data-testid="create-release"><Icon name="plus" size={16} /> Create release</button>
               </div>
             </form>
-          </section>
-        </div>
+        </LocalDialog>
       ) : null}
     </div>
   )

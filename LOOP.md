@@ -30,6 +30,30 @@ The live demo makes the loop legible without requiring a repository connection:
 | 5 | Replaced the green-heavy visual language with a graphite and cobalt system. Cobalt now carries brand and interaction emphasis; green is reserved for verified states, with amber and rose kept for their semantic meanings. Removed the decorative grid and simplified the verification mark. | Commit [`9dabf3c`](https://github.com/hemanthreddykoduru/Loopline/commit/9dabf3c) · `make test` · `npm run build` | 4 local tests passed; production build passed. |
 | 6 | Aligned the interface with the TestSprite Season 4 visual language: neutral `#131313` / `#181818` surfaces, green `#54B365` primary states, thin borders, 16px cards, compact mono metadata, and no gradients or glow effects. | Commit [`c65ab45`](https://github.com/hemanthreddykoduru/Loopline/commit/c65ab45) · `make test` · `npm run build` | 4 local tests passed; production build passed. |
 | 7 | Converted the entire interface to light mode, including drawers, dialogs, forms, disabled actions, status badges, browser theme colour, and favicon. Added offline light-theme and contrast regression checks. | [Theme tests](tests/theme.test.mjs) · `make test` · `npm run build` | 7 local tests passed; production build passed. Rendered browser checks remain unverified. |
+| 8 | Audited controls and responsive CSS; fixed release-owned verification timers, misleading queued/passed copy and icons, filtered creation, dialog focus/dismissal, local settings effects, complete activity, and utility dialogs. Added real-component regression coverage. | [Interaction tests](tests/interactions.test.mjs) · [Logic tests](tests/loopline.test.mjs) · `make test` · normal and Pages builds | 35 local tests passed. Narrow overview rendered at 310 × 685; browser actions and other viewport checks remain unverified. |
+
+## UI audit evidence — 2026-10-16
+
+The four initial component regressions failed against the prior implementation: queued cards claimed success, filters hid a new release, a background run marked another release passed, and the new-release dialog did not receive focus. They pass after the fixes.
+
+| Surface | Repeatable local coverage |
+| --- | --- |
+| Navigation | All four views and current-page semantics; Browse releases; every sample release card and run-row selection. |
+| Release discovery | Name/version/branch/commit search, combined status filtering, empty-state action, and Clear filters. |
+| Creation | Three required-field errors, error correction/focus, normalized valid submission, visible selected candidate, cleared filters, unique IDs, and a reset form. |
+| Dialogs | Shared boundary-focus trapping, background isolation, scroll lock/cleanup, Escape, backdrop, Cancel, Close, Done, and opener-focus restoration. |
+| Verification | Queued/running/completed progress semantics, duplicate-run blocking, independent concurrent runs, navigation/creation during a run, reruns, and unmount cleanup. |
+| Bundles | Failure detail, simulated suggested fix, state-consistent icons, queued/running/success copy, and disabled unavailable fixes. |
+| Preferences | Both settings persist across views and affect local start/completion notifications and new successful bundle archive markers, including changes during a run. |
+| Utility controls | Workspace/profile/release information, help, notifications, integration status, full retained activity, and notice expiry. |
+
+`make test` runs **25 JSDOM/React component cases, 7 logic cases, and 3 token/theme cases**. It compiles the actual component in memory with existing Vite tooling and makes no network requests. It does not substitute simulated app verification for these project tests, or claim external TestSprite results.
+
+Responsive CSS now wraps narrow headers/actions and long metadata, uses flexible grid tracks, keeps mobile navigation internally scrollable, and lets short-height dialogs scroll. Essential small text and coarse-pointer targets were enlarged. Motion remains transform/opacity-based, with reduced-motion and reduced-transparency rules preserved. These are source-level checks, not measured animation-performance results.
+
+A local built-in-browser image confirmed the updated light overview at **310 × 685** with the heading and primary actions fitting inside the viewport. An attempted New release click timed out; a fresh observation showed the unchanged overview. No browser-interaction success is claimed. Desktop/tablet/other mobile widths, zoom, short-screen overlays, real keyboard/touch behaviour, and rendered animation smoothness remain unverified.
+
+These are local audit results, not a fresh Linux CI run or a deployment of this iteration. The pinned runtime remains Node `22.11.0`; this machine's checks used Node `26.7.0` / npm `11.19.0`. Docker execution is still blocked by the unavailable local daemon.
 
 ## TestSprite cloud evidence
 
@@ -64,10 +88,12 @@ The generated suite should cover the observable product surface:
 - Applying the suggested fix closes the bundle and turns the release green.
 - Running verification exposes the running state, then the passed state.
 - Settings toggles are interactive and the demo disclosure remains visible.
+- Dialog keyboard/backdrop dismissal, local utility controls, retained notifications/activity, and independent background verification behave as described in the UI audit above.
 
 ## Honest limitations
 
 - The app is a deterministic client-side demo; it does not pretend to write to GitHub or a CI system.
 - The public URL is the deployment under test. TestSprite is the external checker, not an app dependency.
 - Light-theme regression tests validate CSS tokens and representative contrast pairs, not rendered desktop/mobile layouts or complete browser accessibility.
+- Component interaction tests validate the real React app in JSDOM, not browser layout, native event defaults, or animation performance.
 - The Docker image definition is present and reproducible; local Docker image execution remains to be verified once the Docker daemon is running.
