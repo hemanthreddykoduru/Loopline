@@ -34,6 +34,10 @@ jobs:
       - name: Run tests
         run: make test
       - name: Build
+        env:
+          VITE_INSFORGE_BASE_URL: ${{ vars.VITE_INSFORGE_BASE_URL }}
+          VITE_INSFORGE_ANON_KEY: ${{ secrets.VITE_INSFORGE_ANON_KEY }}
+          VITE_INSFORGE_FUNCTIONS_URL: ${{ vars.VITE_INSFORGE_FUNCTIONS_URL }}
         run: npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

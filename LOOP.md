@@ -10,13 +10,13 @@ This file is an evidence index, not a claim that a check ran when it did not. Lo
 
 ## Product loop
 
-The live demo makes the loop legible without requiring a repository connection:
+The current product makes the evidence loop legible without inventing a result:
 
-1. Select a release from the queue.
-2. Open its verification bundle.
-3. Read the failed browser-journey signal and suggested change.
-4. Apply the targeted fix.
-5. Run verification again and observe the green end state.
+1. Open the public landing page and review the read-only GitHub scope.
+2. Authenticate through the configured InsForge email flow.
+3. Connect a public repository and inspect the saved default-branch snapshot.
+4. Choose an observed PR target and sync its current commit and published checks.
+5. Review the exact SHA, check evidence, source links, stale/error state, and bounded history before making a release decision.
 
 ## Build iterations
 
@@ -31,6 +31,7 @@ The live demo makes the loop legible without requiring a repository connection:
 | 6 | Aligned the interface with the TestSprite Season 4 visual language: neutral `#131313` / `#181818` surfaces, green `#54B365` primary states, thin borders, 16px cards, compact mono metadata, and no gradients or glow effects. | Commit [`c65ab45`](https://github.com/hemanthreddykoduru/Loopline/commit/c65ab45) · `make test` · `npm run build` | 4 local tests passed; production build passed. |
 | 7 | Converted the entire interface to light mode, including drawers, dialogs, forms, disabled actions, status badges, browser theme colour, and favicon. Added offline light-theme and contrast regression checks. | [Theme tests](tests/theme.test.mjs) · `make test` · `npm run build` | 7 local tests passed; production build passed. Rendered browser checks remain unverified. |
 | 8 | Audited controls and responsive CSS; fixed release-owned verification timers, misleading queued/passed copy and icons, filtered creation, dialog focus/dismissal, local settings effects, complete activity, and utility dialogs. Added real-component regression coverage. | [Interaction tests](tests/interactions.test.mjs) · [Logic tests](tests/loopline.test.mjs) · `make test` · normal and Pages builds | 35 local tests passed. Narrow overview rendered at 310 × 685; browser actions and other viewport checks remain unverified. |
+| 9 | Replaced the demo entrypoint with the public/auth/workspace flow; added the InsForge browser adapter, direct functions URL support, authenticated repository actions, target-aware evidence UI, deployment configuration, and backend/API regression coverage. | [Frontend adapter](src/loopline-api.js) · [Workspace](src/Workspace.jsx) · [Backend contract](backend/README.md) · `make test` · `npm run build` | **48 local tests passed.** Authenticated persistence, live GitHub evidence, and rendered browser flows still require an authorised runtime and deployment configuration. |
 
 ## UI audit evidence — 2026-10-16
 
@@ -47,7 +48,7 @@ The four initial component regressions failed against the prior implementation: 
 | Preferences | Both settings persist across views and affect local start/completion notifications and new successful bundle archive markers, including changes during a run. |
 | Utility controls | Workspace/profile/release information, help, notifications, integration status, full retained activity, and notice expiry. |
 
-`make test` runs **25 JSDOM/React component cases, 7 logic cases, and 3 token/theme cases**. It compiles the actual component in memory with existing Vite tooling and makes no network requests. It does not substitute simulated app verification for these project tests, or claim external TestSprite results.
+`make test` runs the current JSDOM/React route/auth/workspace smoke cases, API-adapter cases, backend policy cases, retained logic cases, and token/theme cases. It compiles the actual component in memory with existing Vite tooling and makes no network requests. It does not substitute offline tests for authenticated production persistence, live GitHub evidence, or external TestSprite results.
 
 Responsive CSS now wraps narrow headers/actions and long metadata, uses flexible grid tracks, keeps mobile navigation internally scrollable, and lets short-height dialogs scroll. Essential small text and coarse-pointer targets were enlarged. Motion remains transform/opacity-based, with reduced-motion and reduced-transparency rules preserved. These are source-level checks, not measured animation-performance results.
 
@@ -92,8 +93,9 @@ The generated suite should cover the observable product surface:
 
 ## Honest limitations
 
-- The app is a deterministic client-side demo; it does not pretend to write to GitHub or a CI system.
-- The public URL is the deployment under test. TestSprite is the external checker, not an app dependency.
+- The app reads public GitHub evidence through a deployed InsForge function; it does not write to GitHub, run CI, install an App, or change code.
+- Authenticated persistence and two-user isolation were not exercised with created test users in the recorded backend verification.
+- The public deployment must be rebuilt with the three public `VITE_INSFORGE_*` values before the connected workspace can be exercised there.
 - Light-theme regression tests validate CSS tokens and representative contrast pairs, not rendered desktop/mobile layouts or complete browser accessibility.
 - Component interaction tests validate the real React app in JSDOM, not browser layout, native event defaults, or animation performance.
 - The Docker image definition is present and reproducible; local Docker image execution remains to be verified once the Docker daemon is running.

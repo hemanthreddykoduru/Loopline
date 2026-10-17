@@ -10,20 +10,20 @@ The TestSprite Discover gallery makes one thing clear: the strongest projects do
 
 Loopline applies that pattern to release readiness:
 
-- **Product quality:** a focused, responsive release cockpit with a clear failure-to-fix path.
-- **Verification quality:** release gates, search/filter coverage, required-field validation, failure bundles, and a running-to-green state that TestSprite can exercise.
-- **Innovation:** the failure bundle is presented as a decision surface — signal, likely cause, suggested change, and rerun — rather than a generic error page.
-- **Proof:** the repo contains the reproducibility contract, public deployment workflow, PR history, and this evidence log. TestSprite results will be linked here only after they actually run.
+- **Product quality:** a focused, responsive evidence workspace with a clear repository-to-release review path.
+- **Verification quality:** authenticated routing, public-repository validation, branch/PR target selection, exact-commit evidence, bounded history, stale/error states, and safe source links.
+- **Innovation:** a release decision is grounded in the checks GitHub actually published for the selected commit rather than a locally invented green state.
+- **Proof:** the repo contains the reproducibility contract, public deployment workflow, InsForge function source/migrations, offline policy tests, and this evidence log. TestSprite results will be linked here only after they actually run.
 
 ## 60-second judge path
 
 1. Open the [live app](https://hemanthreddykoduru.github.io/Loopline/).
-2. Start on **Checkout refresh** in Overview.
-3. Click **View verification bundle**.
-4. Read the failed **Browser journeys** signal and the suggested settle-window change.
-5. Click **Apply suggested fix**; the bundle closes and the release becomes verified.
-6. Click **Run again** to see the verification state move through the loop.
-7. Open **Test runs** and **Settings** to see the rest of the surface.
+2. Review the landing page’s evidence and public-read-only disclosure.
+3. Sign in with an authorised account, then open **Connect repository**.
+4. Connect a public GitHub repository and review its saved default-branch snapshot.
+5. Select an observed open PR, sync it, and confirm the displayed SHA, checks, source links, and point-in-time warning all match that target.
+6. Exercise a failed or rate-limited sync only when the backend returns one; do not treat cached evidence as current.
+7. Confirm disconnect before removing the repository from the account.
 8. Open PR [#1](https://github.com/hemanthreddykoduru/Loopline/pull/1) and read the TestSprite comment/check once it is connected.
 
 ## Evidence links

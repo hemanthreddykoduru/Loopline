@@ -4,4 +4,7 @@ dist
 .env
 .env.*
 !.env.example
+.insforge/
+.omnirush/
+.opencode/omnirush/
 *.log
