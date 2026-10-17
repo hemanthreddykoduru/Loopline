@@ -27,6 +27,49 @@ function SectionLink({ target, children, ...props }) {
 export function LandingPage({ navigate, user, preview }) {
   const destination = user ? '/app' : '/signup'
   const cta = user ? 'Open workspace' : 'Create account'
+  const illustrativePreview = (
+    <div className="pub-evidence-preview" aria-label="Illustrative evidence preview">
+      <div className="pub-preview-header">
+        <span className="pub-preview-label">Illustrative evidence view</span>
+        <span className="pub-preview-notice">Sample data · not live</span>
+      </div>
+
+      <div className="pub-preview-repository">
+        <span className="pub-preview-icon" aria-hidden="true"><GithubLogo size={20} /></span>
+        <span className="pub-preview-repository-copy"><strong>Loopline / public repository</strong><small>Read-only GitHub source</small></span>
+        <ArrowUpRight size={16} aria-hidden="true" />
+      </div>
+
+      <div className="pub-preview-commit">
+        <div className="pub-preview-commit-heading"><span className="pub-data-label">Commit under review</span><span className="pub-commit-ref">main</span></div>
+        <code>9d3b756a9226bb38170cf87a3545182ed4c5190f</code>
+        <p><GitCommit size={15} aria-hidden="true" /> Exact commit SHA · source linked</p>
+      </div>
+
+      <div className="pub-preview-checks">
+        <div className="pub-preview-checks-heading"><span>Published checks</span><small>from GitHub</small></div>
+        <ul>
+          <li>
+            <CheckCircle className="pub-preview-check-icon" size={18} aria-hidden="true" />
+            <span className="pub-preview-check-copy"><strong>TestSprite</strong><small>Published check</small></span>
+            <span className="pub-preview-check-state">observed</span>
+          </li>
+          <li>
+            <CheckCircle className="pub-preview-check-icon" size={18} aria-hidden="true" />
+            <span className="pub-preview-check-copy"><strong>GitHub Actions</strong><small>Published check</small></span>
+            <span className="pub-preview-check-state">reported</span>
+          </li>
+          <li>
+            <ShieldCheck className="pub-preview-check-icon" size={18} aria-hidden="true" />
+            <span className="pub-preview-check-copy"><strong>Source access</strong><small>Public, read-only</small></span>
+            <span className="pub-preview-check-state">verified</span>
+          </li>
+        </ul>
+      </div>
+
+      <p className="pub-preview-footnote">Illustrative view · no repository is connected here.</p>
+    </div>
+  )
 
   return (
     <div className="pub-page">
@@ -44,65 +87,89 @@ export function LandingPage({ navigate, user, preview }) {
         </div>
       </header>
 
-      <main id="pub-main" tabIndex={-1}>
-        <section className="pub-hero pub-wrap" aria-labelledby="pub-hero-title">
-          <div className="pub-hero-copy">
-            <p className="pub-eyebrow"><GitBranch size={16} aria-hidden="true" /> Release readiness, grounded in GitHub</p>
-            <h1 id="pub-hero-title">Ship the<br className="pub-hero-break" /> right commit.</h1>
-            <p className="pub-hero-description">Bring GitHub checks, commit evidence, and release decisions into one focused workspace for your team.</p>
-            <div className="pub-hero-actions">
-              <RouteLink className="pub-button pub-button-primary" to={destination} navigate={navigate} data-testid="landing-hero-cta">{cta}<ArrowRight size={18} aria-hidden="true" /></RouteLink>
-              <SectionLink className="pub-text-link" target="workflow" data-testid="landing-workflow-link">See the workflow <ArrowRight size={16} aria-hidden="true" /></SectionLink>
+        <main id="pub-main" tabIndex={-1}>
+          <section className="pub-hero pub-wrap" aria-labelledby="pub-hero-title">
+            <div className="pub-hero-copy">
+              <p className="pub-eyebrow"><GitBranch size={16} aria-hidden="true" /> Release readiness, grounded in GitHub</p>
+              <h1 id="pub-hero-title">Ship the<br className="pub-hero-break" /> right commit.</h1>
+              <p className="pub-hero-description">Review one release against one exact commit and the checks GitHub has already published. Nothing is written back.</p>
+              <div className="pub-hero-actions">
+                <RouteLink className="pub-button pub-button-primary" to={destination} navigate={navigate} data-testid="landing-hero-cta">{cta}<ArrowRight size={18} aria-hidden="true" /></RouteLink>
+                <SectionLink className="pub-text-link" target="workflow" data-testid="landing-workflow-link">See the workflow <ArrowRight size={16} aria-hidden="true" /></SectionLink>
+              </div>
             </div>
-          </div>
-          <figure className="pub-preview" aria-label="Loopline repository evidence" data-testid="landing-preview">
-            <div className="pub-preview-content">
-              {preview || <div className="pub-preview-empty"><GitCommit size={32} aria-hidden="true" /><h2>Your evidence starts with a repository.</h2><p>Connect a public GitHub repository in your workspace to see its real checks and commit SHA.</p></div>}
+            <figure className="pub-preview" aria-label="Loopline repository evidence" data-testid="landing-preview">
+              <div className="pub-preview-content">
+                {preview || illustrativePreview}
+              </div>
+              <figcaption><span className="pub-caption-mark" aria-hidden="true" /><span>Commit-linked evidence, from the workspace.</span></figcaption>
+            </figure>
+          </section>
+
+          <section className="pub-principles" id="product" tabIndex={-1} aria-labelledby="pub-product-title">
+            <div className="pub-wrap pub-principles-grid">
+              <div className="pub-section-intro">
+                <h2 id="pub-product-title">Make release readiness legible.</h2>
+                <p>A passing check only helps when the team can see what it belongs to. Loopline keeps the commit, its source, and its published checks in the same frame.</p>
+              </div>
+              <div className="pub-principles-rail">
+                <article>
+                  <span className="pub-principle-index">01</span>
+                  <div><h3>Start with the exact SHA</h3><p>Tie a release review to the version of the code your team is actually discussing.</p></div>
+                  <GitCommit size={22} aria-hidden="true" />
+                </article>
+                <article>
+                  <span className="pub-principle-index">02</span>
+                  <div><h3>Read published checks</h3><p>See check runs and commit statuses reported by GitHub, then follow the original result for detail.</p></div>
+                  <CheckCircle size={22} aria-hidden="true" />
+                </article>
+                <article>
+                  <span className="pub-principle-index">03</span>
+                  <div><h3>Keep the boundary clear</h3><p>Public, read-only GitHub access means Loopline observes evidence without running tests or changing code.</p></div>
+                  <ShieldCheck size={22} aria-hidden="true" />
+                </article>
+              </div>
             </div>
-            <figcaption><span className="pub-caption-mark" aria-hidden="true" /><span>Commit-linked evidence, from the workspace.</span></figcaption>
-          </figure>
-        </section>
+          </section>
 
-        <section className="pub-product" id="product" tabIndex={-1} aria-labelledby="pub-product-title">
-          <div className="pub-wrap">
-            <div className="pub-section-intro">
-              <h2 id="pub-product-title">A passing check needs the right context.</h2>
-              <p>A green check on yesterday’s commit doesn’t tell you whether today’s release is ready. Keep the source of each result in view.</p>
+          <section className="pub-workflow pub-wrap" id="workflow" tabIndex={-1} aria-labelledby="pub-workflow-title">
+            <div className="pub-workflow-heading">
+              <h2 id="pub-workflow-title">From repository<br />to release review.</h2>
+              <p>Your CI stays in GitHub. Loopline gives its results a shared place in the release process.</p>
+              <a className="pub-text-link" href={repositoryUrl} target="_blank" rel="noreferrer" data-testid="landing-source-link"><GithubLogo size={18} aria-hidden="true" /> View the project <ArrowUpRight size={15} aria-hidden="true" /></a>
             </div>
-            <dl className="pub-evidence-list">
-              <div><dt><GitCommit size={21} aria-hidden="true" /> Start with the SHA</dt><dd>Tie the release to a specific commit, so your team reviews the same version of the code.</dd></div>
-              <div><dt><CheckCircle size={21} aria-hidden="true" /> Read the actual checks</dt><dd>Review check runs and commit statuses reported by GitHub, then follow the original result for details.</dd></div>
-              <div><dt><ShieldCheck size={21} aria-hidden="true" /> Keep the decision informed</dt><dd>See missing, pending, or failed evidence before calling a release ready. An unavailable provider is never a passing result.</dd></div>
-            </dl>
-          </div>
-        </section>
+            <ol className="pub-steps">
+              <li><span className="pub-step-number" aria-hidden="true">01</span><div><h3>Connect a public repository</h3><p>Add the GitHub owner and repository name. Your workspace starts empty until you connect it.</p></div><span className="pub-step-tag">source</span></li>
+              <li><span className="pub-step-number" aria-hidden="true">02</span><div><h3>Choose the commit to review</h3><p>Create a release around its exact SHA, with a clear reference back to the source.</p></div><span className="pub-step-tag">commit</span></li>
+              <li><span className="pub-step-number" aria-hidden="true">03</span><div><h3>Review the evidence together</h3><p>Read the checks attached to that commit and open GitHub when you need the underlying details.</p></div><span className="pub-step-tag">evidence</span></li>
+            </ol>
+          </section>
 
-        <section className="pub-workflow pub-wrap" id="workflow" tabIndex={-1} aria-labelledby="pub-workflow-title">
-          <div className="pub-workflow-heading">
-            <h2 id="pub-workflow-title">From repository<br />to release review.</h2>
-            <p>Your CI stays in GitHub. Loopline gives its results a shared place in your release process.</p>
-            <a className="pub-text-link" href={repositoryUrl} target="_blank" rel="noreferrer" data-testid="landing-source-link"><GithubLogo size={18} aria-hidden="true" /> View the project <ArrowUpRight size={15} aria-hidden="true" /></a>
-          </div>
-          <ol className="pub-steps">
-            <li><span className="pub-step-number" aria-hidden="true">01</span><div><h3>Connect a public repository</h3><p>Add the GitHub owner and repository name. Your workspace starts empty until you connect it.</p></div></li>
-            <li><span className="pub-step-number" aria-hidden="true">02</span><div><h3>Choose the commit to review</h3><p>Create a release around its commit SHA, with a clear reference back to the source.</p></div></li>
-            <li><span className="pub-step-number" aria-hidden="true">03</span><div><h3>Review the evidence together</h3><p>Read the checks attached to that commit and open GitHub when you need the underlying details.</p></div></li>
-          </ol>
-        </section>
+          <section className="pub-help pub-wrap" id="help" tabIndex={-1} aria-labelledby="pub-help-title">
+            <div className="pub-help-intro">
+              <h2 id="pub-help-title">Know what you’re connecting.</h2>
+              <p>Loopline is deliberately narrow: a shared read of GitHub evidence, with no hidden automation behind the result.</p>
+            </div>
+            <div className="pub-questions">
+              <details open><summary>Which repositories can I connect?</summary><p>The first connector reads public GitHub repositories only. Private repositories and GitHub App authorization are not supported. Your Loopline account is separate from repository access.</p></details>
+              <details><summary>Does Loopline run tests or change code?</summary><p>No. Loopline reads evidence from checks and statuses already reported to GitHub. It does not run your test suite, push commits, or automatically fix code.</p></details>
+              <details><summary>What if GitHub has no results?</summary><p>Missing evidence stays visible. A new workspace is empty, and a failed or rate-limited GitHub request shows an error rather than invented results.</p></details>
+            </div>
+          </section>
 
-        <section className="pub-help pub-wrap" id="help" tabIndex={-1} aria-labelledby="pub-help-title">
-          <h2 id="pub-help-title">Know what you’re connecting.</h2>
-          <div className="pub-questions">
-            <details open><summary>Which repositories can I connect?</summary><p>The first connector reads public GitHub repositories only. Private repositories and GitHub App authorization are not supported. Your Loopline account is separate from repository access.</p></details>
-            <details><summary>Does Loopline run tests or change code?</summary><p>No. Loopline reads evidence from checks and statuses already reported to GitHub. It does not run your test suite, push commits, or automatically fix code.</p></details>
-            <details><summary>What if GitHub has no results?</summary><p>Missing evidence stays visible. A new workspace is empty, and a failed or rate-limited GitHub request shows an error rather than invented results.</p></details>
-          </div>
-          <div className="pub-help-action"><p>A shared view of what’s ready.<br /><strong>Start with your next commit.</strong></p><RouteLink className="pub-button pub-button-primary" to={destination} navigate={navigate} data-testid="landing-bottom-cta">{cta}<ArrowRight size={18} aria-hidden="true" /></RouteLink></div>
-        </section>
-      </main>
+          <section className="pub-final-cta" aria-labelledby="pub-final-cta-title">
+            <div className="pub-wrap pub-final-cta-inner">
+              <div>
+                <h2 id="pub-final-cta-title">Keep the evidence close to the release.</h2>
+                <p>Start with one public repository and one commit your team needs to review.</p>
+              </div>
+              <RouteLink className="pub-button pub-button-primary" to={destination} navigate={navigate} data-testid="landing-bottom-cta">{cta}<ArrowRight size={18} aria-hidden="true" /></RouteLink>
+            </div>
+          </section>
+        </main>
 
-      <footer className="pub-footer pub-wrap"><Brand /><p>Release evidence. A clear next step.</p><a href={repositoryUrl} target="_blank" rel="noreferrer" data-testid="landing-footer-repository">GitHub <ArrowUpRight size={14} aria-hidden="true" /></a></footer>
-    </div>
+        <footer className="pub-footer pub-wrap"><Brand /><p>Release evidence, tied to the source.</p><a href={repositoryUrl} target="_blank" rel="noreferrer" data-testid="landing-footer-repository">Project on GitHub <ArrowUpRight size={14} aria-hidden="true" /></a></footer>
+      </div>
   )
 }
 

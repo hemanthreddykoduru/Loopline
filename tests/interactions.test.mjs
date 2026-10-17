@@ -5,6 +5,10 @@ import { JSDOM } from 'jsdom'
 import { build } from 'vite'
 
 process.env.NODE_ENV = 'test'
+// Keep this offline component harness independent of a developer's connected `.env`.
+process.env.VITE_INSFORGE_BASE_URL = ''
+process.env.VITE_INSFORGE_ANON_KEY = ''
+process.env.VITE_INSFORGE_FUNCTIONS_URL = ''
 
 // Compile the rendered application with the production toolchain, without writing build files.
 const result = await build({
@@ -135,6 +139,8 @@ test('hash routing accepts supported routes and falls back safely', () => {
 test('the public landing page links to an unavailable auth state without backend configuration', async () => {
   await render(createElement(App))
   assert.ok(byId('landing-hero-cta'))
+  assert.ok(byId('landing-preview').querySelector('.pub-evidence-preview'))
+  assert.equal(document.querySelectorAll('.pub-section-index').length, 0)
   assert.equal(document.querySelector('.pub-hero h1').textContent, 'Ship the right commit.')
 
   await click('landing-nav-login')
