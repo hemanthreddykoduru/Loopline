@@ -450,7 +450,7 @@ function AuthFlow({ mode = 'login', navigate, auth, authConfig, onAuthenticated,
           <div className="auth-context-note"><ShieldCheck size={19} aria-hidden="true" /><span>Public GitHub repositories.<br />Read-only access.</span></div>
         </aside>
 
-        <section className="auth-card" aria-labelledby={`${id}-title`}>
+          <section className="auth-card" data-mode={mode} data-state={configIssue ? 'unavailable' : resetDone ? 'complete' : verification ? 'verification' : pending ? 'pending' : feedback?.type || 'ready'} aria-labelledby={`${id}-title`}>
           <div className="auth-card-heading">
             <h1 id={`${id}-title`} ref={headingRef} tabIndex={-1}>{title}</h1>
             <p>{description}</p>
