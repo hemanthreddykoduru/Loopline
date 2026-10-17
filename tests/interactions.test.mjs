@@ -128,6 +128,15 @@ function createAuthRuntime({
   return { client: { auth }, auth, api, unavailableReason: '' }
 }
 
+function createPendingRuntime() {
+  const auth = {
+    getCurrentUser: () => new Promise(() => {}),
+    getPublicAuthConfig: () => new Promise(() => {}),
+    onAuthStateChange: () => () => {},
+  }
+  return { client: { auth }, auth, api: null, unavailableReason: '' }
+}
+
 test('hash routing accepts supported routes and falls back safely', () => {
   assert.equal(routeFromHash('#/app'), '/app')
   assert.equal(routeFromHash('#/reset-password?email=person@example.com'), '/reset-password')
@@ -151,6 +160,12 @@ test('the public landing page links to an unavailable auth state without backend
 
   await click('auth-nav-home')
   assert.ok(byId('landing-hero-cta'))
+})
+
+test('session bootstrap keeps the landing page visible instead of showing a loading message', async () => {
+  await render(createElement(App, { runtimeOverride: createPendingRuntime() }))
+  assert.ok(byId('landing-hero-cta'))
+  assert.equal(document.body.textContent.includes('Loading Loopline'), false)
 })
 
 test('reset email remains available when moving from the reset request to the code form', async () => {

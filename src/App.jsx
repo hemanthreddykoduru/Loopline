@@ -31,10 +31,6 @@ function errorMessage(error, fallback) {
   return normalizeLooplineError(error, fallback).message
 }
 
-function LoadingState() {
-  return <div className="app-loading" role="status" aria-live="polite">Loading Loopline…</div>
-}
-
 function App({ runtimeOverride = runtime } = {}) {
   const activeRuntime = runtimeOverride
   const [route, setRoute] = useState(() => routeFromHash())
@@ -165,7 +161,9 @@ function App({ runtimeOverride = runtime } = {}) {
     )
   }
 
-  if (!authReady) return <LoadingState />
+  // Keep public surfaces visible while session/config bootstrap runs. The SDK
+  // result still controls whether `/app` becomes the authenticated workspace.
+  if (route === '/app' && !authReady) return <LandingPage navigate={navigate} user={user} />
   if (route === '/app' && user && activeRuntime.api) {
     return <Workspace user={user} api={activeRuntime.api} onSignOut={signOut} navigate={navigate} />
   }
