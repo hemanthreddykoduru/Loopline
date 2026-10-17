@@ -209,6 +209,8 @@
 .pub-preview-empty h2 { max-width: 22ch; margin: 17px 0 9px; font-size: 24px; font-weight: 600; line-height: 1.25; letter-spacing: -0.025em; }
 .pub-preview-empty p { max-width: 38ch; margin: 0; color: var(--pub-muted, #536259); font-size: 14px; line-height: 1.65; }
 
+.pub-reveal { opacity: 1; transform: none; }
+
 :is(.pub-principles, .pub-workflow, .pub-help) { scroll-margin-top: 24px; }
 :is(.pub-principles, .pub-workflow, .pub-help, #pub-main):focus { outline: none; }
 .pub-principles { padding-block: 94px 104px; border-block: 1px solid var(--pub-border, #dce3df); background: var(--pub-surface, #fff); }
@@ -343,15 +345,16 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes pub-preview-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   :is(.pub-button, .auth-submit, .auth-text-button, .auth-password-toggle, .ll-dialog-close) { transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease; }
   :is(.pub-button, .auth-submit):active:not(:disabled) { transform: translateY(1px); }
   .pub-page .pub-hero-copy { animation: pub-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
   .pub-page .pub-preview { animation: pub-rise 700ms 90ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-  .pub-page .pub-principles-grid { animation: pub-rise 650ms 150ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-  .pub-page .pub-workflow { animation: pub-rise 650ms 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-  .pub-page .pub-help { animation: pub-rise 650ms 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-  .pub-page .pub-final-cta { animation: pub-rise 650ms 340ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
   .pub-page .pub-button,
   .pub-page .pub-text-link,
   .pub-page .pub-nav a,
@@ -366,6 +369,18 @@
   .pub-page .pub-footer > a:hover { transform: translateY(-1px); }
   .pub-page .pub-principles-rail article:hover,
   .pub-page .pub-steps li:hover { transform: translateX(4px); }
+  .pub-page .pub-reveal-pending { opacity: 0; transform: translateY(16px); }
+  .pub-page .pub-reveal-revealed { opacity: 1; transform: translateY(0); transition: opacity 600ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .pub-page .pub-principles-rail article.pub-reveal-revealed,
+  .pub-page .pub-steps li.pub-reveal-revealed { transition: opacity 600ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .pub-page .pub-evidence-preview .pub-preview-repository { animation: pub-preview-rise 450ms 170ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .pub-page .pub-evidence-preview .pub-preview-commit { animation: pub-preview-rise 450ms 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .pub-page .pub-evidence-preview .pub-preview-checks-heading { animation: pub-preview-rise 450ms 350ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .pub-page .pub-evidence-preview .pub-preview-checks li { animation: pub-preview-rise 450ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .pub-page .pub-evidence-preview .pub-preview-checks li:nth-child(1) { animation-delay: 430ms; }
+  .pub-page .pub-evidence-preview .pub-preview-checks li:nth-child(2) { animation-delay: 490ms; }
+  .pub-page .pub-evidence-preview .pub-preview-checks li:nth-child(3) { animation-delay: 550ms; }
+  .pub-page .pub-evidence-preview .pub-preview-footnote { animation: pub-preview-rise 450ms 640ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 }
 
 @media (prefers-reduced-motion: reduce) {
