@@ -27,16 +27,6 @@ export function normalizeRoute(path) {
   return routes.has(value) ? value : '/'
 }
 
-function errorMessage(error, fallback) {
-  return normalizeLooplineError(error, fallback).message
-}
-
-function isMissingSessionError(error) {
-  const code = String(error?.error || error?.code || '').replaceAll('_', ' ')
-  const message = String(error?.message || '')
-  return /no refresh token|refresh token (?:is )?missing|no active session|not authenticated|unauthenticated/i.test(`${code} ${message}`)
-}
-
 function App({ runtimeOverride = runtime } = {}) {
   const activeRuntime = runtimeOverride
   const [route, setRoute] = useState(() => routeFromHash())
@@ -71,40 +61,44 @@ function App({ runtimeOverride = runtime } = {}) {
     const { auth } = activeRuntime.client
 
     async function readCurrentUser() {
-      const result = await auth.getCurrentUser()
-      if (result?.error && !isMissingSessionError(result.error)) throw result.error
-      if (!result || !isRecord(result.data)) throw new Error('The authentication service did not return the current session.')
-      return result?.data?.user || null
+      try {
+        const result = await auth.getCurrentUser()
+        if (result?.error || !result || !isRecord(result.data)) return null
+        return result.data.user || null
+      } catch {
+        // Session discovery is advisory. A transient refresh/network failure
+        // must not disable signup, login, or password reset forms.
+        return null
+      }
     }
 
     async function initializeAuth() {
-      try {
-        // The SDK result is the source of truth for a session restored on startup.
-        const [currentUserResult, publicConfigResult] = await Promise.all([
-          auth.getCurrentUser(),
-          auth.getPublicAuthConfig(),
-        ])
-        if (currentUserResult?.error && !isMissingSessionError(currentUserResult.error)) throw currentUserResult.error
-        if (publicConfigResult?.error) throw publicConfigResult.error
-        if (!currentUserResult || !isRecord(currentUserResult.data)) {
-          throw new Error('The authentication service did not return the current session.')
-        }
-        if (!publicConfigResult || !Object.hasOwn(publicConfigResult, 'data')) {
-          throw new Error('The authentication service did not return its public configuration.')
-        }
-        if (!isRecord(publicConfigResult.data)) {
-          throw new Error('The authentication service did not return its public configuration.')
-        }
-        if (!active) return
-        setUser(currentUserResult?.data?.user || null)
-        setAuthConfig(normalizePublicAuthConfig(publicConfigResult.data))
-        setAuthUnavailable('')
-      } catch (error) {
-        if (!active) return
-        setAuthUnavailable(errorMessage(error, 'The authentication service is unavailable. Please try again shortly.'))
-      } finally {
-        if (active) setAuthReady(true)
+      const [currentUserResult, publicConfigResult] = await Promise.allSettled([
+        auth.getCurrentUser(),
+        auth.getPublicAuthConfig(),
+      ])
+      if (!active) return
+
+      // A failed/empty refresh means signed out. It is not an auth-service
+      // outage, and should never replace the usable public auth forms.
+      const currentUser = currentUserResult.status === 'fulfilled'
+        && !currentUserResult.value?.error
+        && isRecord(currentUserResult.value?.data)
+        ? currentUserResult.value.data.user || null
+        : null
+      setUser(currentUser)
+
+      if (publicConfigResult.status === 'fulfilled'
+        && !publicConfigResult.value?.error
+        && isRecord(publicConfigResult.value?.data)) {
+        setAuthConfig(normalizePublicAuthConfig(publicConfigResult.value.data))
+      } else {
+        // Auth methods remain enabled with safe defaults; the action itself
+        // will surface a contextual network/service error if it still fails.
+        setAuthConfig(normalizePublicAuthConfig({}))
       }
+      setAuthUnavailable(activeRuntime.unavailableReason || '')
+      setAuthReady(true)
     }
 
     void initializeAuth()
@@ -116,13 +110,9 @@ function App({ runtimeOverride = runtime } = {}) {
           setUser(null)
           return
         }
-        void readCurrentUser()
-          .then((currentUser) => {
-            if (active) setUser(currentUser)
-          })
-          .catch((error) => {
-            if (active) setAuthUnavailable(errorMessage(error, 'The authentication service is unavailable.'))
-          })
+        void readCurrentUser().then((currentUser) => {
+          if (active) setUser(currentUser)
+        })
       })
       : undefined
 
