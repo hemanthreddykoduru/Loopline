@@ -31,6 +31,12 @@ function errorMessage(error, fallback) {
   return normalizeLooplineError(error, fallback).message
 }
 
+function isMissingSessionError(error) {
+  const code = String(error?.error || error?.code || '').replaceAll('_', ' ')
+  const message = String(error?.message || '')
+  return /no refresh token|refresh token (?:is )?missing|no active session|not authenticated|unauthenticated/i.test(`${code} ${message}`)
+}
+
 function App({ runtimeOverride = runtime } = {}) {
   const activeRuntime = runtimeOverride
   const [route, setRoute] = useState(() => routeFromHash())
@@ -66,7 +72,7 @@ function App({ runtimeOverride = runtime } = {}) {
 
     async function readCurrentUser() {
       const result = await auth.getCurrentUser()
-      if (result?.error) throw result.error
+      if (result?.error && !isMissingSessionError(result.error)) throw result.error
       if (!result || !isRecord(result.data)) throw new Error('The authentication service did not return the current session.')
       return result?.data?.user || null
     }
@@ -78,7 +84,7 @@ function App({ runtimeOverride = runtime } = {}) {
           auth.getCurrentUser(),
           auth.getPublicAuthConfig(),
         ])
-        if (currentUserResult?.error) throw currentUserResult.error
+        if (currentUserResult?.error && !isMissingSessionError(currentUserResult.error)) throw currentUserResult.error
         if (publicConfigResult?.error) throw publicConfigResult.error
         if (!currentUserResult || !isRecord(currentUserResult.data)) {
           throw new Error('The authentication service did not return the current session.')

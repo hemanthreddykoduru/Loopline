@@ -137,6 +137,15 @@ function createPendingRuntime() {
   return { client: { auth }, auth, api: null, unavailableReason: '' }
 }
 
+function createNoRefreshTokenRuntime() {
+  const auth = {
+    getCurrentUser: async () => ({ data: { user: null }, error: Object.assign(new Error('No refresh token provided'), { error: 'AUTH_REFRESH_TOKEN_MISSING', statusCode: 401 }) }),
+    getPublicAuthConfig: async () => ({ data: { requireEmailVerification: true, passwordMinLength: 6 }, error: null }),
+    onAuthStateChange: () => () => {},
+  }
+  return { client: { auth }, auth, api: null, unavailableReason: '' }
+}
+
 test('hash routing accepts supported routes and falls back safely', () => {
   assert.equal(routeFromHash('#/app'), '/app')
   assert.equal(routeFromHash('#/reset-password?email=person@example.com'), '/reset-password')
@@ -166,6 +175,14 @@ test('session bootstrap keeps the landing page visible instead of showing a load
   await render(createElement(App, { runtimeOverride: createPendingRuntime() }))
   assert.ok(byId('landing-hero-cta'))
   assert.equal(document.body.textContent.includes('Loading Loopline'), false)
+})
+
+test('a missing refresh token is treated as signed out, not as an unavailable auth service', async () => {
+  window.location.hash = '#/login'
+  await render(createElement(App, { runtimeOverride: createNoRefreshTokenRuntime() }))
+  assert.ok(byId('auth-form'))
+  assert.equal(byId('auth-unavailable'), null)
+  assert.equal(byId('auth-submit').disabled, false)
 })
 
 test('reset email remains available when moving from the reset request to the code form', async () => {
