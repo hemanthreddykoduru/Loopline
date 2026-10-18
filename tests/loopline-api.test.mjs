@@ -29,6 +29,22 @@ test('public InsForge configuration requires a base URL and anonymous key', () =
   }).unavailableReason, /VITE_INSFORGE_FUNCTIONS_URL/)
 })
 
+test('browser development auth uses a same-origin proxy for refresh cookies', () => {
+  const previousWindow = globalThis.window
+  globalThis.window = { location: { origin: 'http://127.0.0.1:5173' } }
+  try {
+    const result = readInsForgePublicConfig({
+      DEV: true,
+      VITE_INSFORGE_BASE_URL: 'https://example.insforge.app',
+      VITE_INSFORGE_ANON_KEY: 'public-anon-key',
+    })
+    assert.equal(result.config.baseUrl, 'http://127.0.0.1:5173/insforge')
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window
+    else globalThis.window = previousWindow
+  }
+})
+
 test('public auth configuration accepts a nested config and supplies safe defaults', () => {
   assert.deepEqual(normalizePublicAuthConfig({ data: { config: { passwordMinLength: 12, disableSignup: true } } }), {
     passwordMinLength: 12,

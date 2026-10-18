@@ -20,6 +20,11 @@ function validHttpUrl(value) {
   }
 }
 
+function resolveBrowserBaseUrl(baseUrl, env) {
+  if (env?.DEV !== true || typeof window === 'undefined' || !validHttpUrl(window.location?.origin)) return baseUrl
+  return new URL('/insforge', window.location.origin).toString().replace(/\/$/, '')
+}
+
 function viteEnv() {
   return import.meta.env || {}
 }
@@ -41,7 +46,7 @@ export function readInsForgePublicConfig(env = viteEnv()) {
 
   return {
     config: {
-      baseUrl,
+      baseUrl: resolveBrowserBaseUrl(baseUrl, env),
       anonKey,
       ...(functionsUrl ? { functionsUrl } : {}),
     },
