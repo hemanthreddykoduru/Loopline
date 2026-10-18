@@ -155,6 +155,15 @@ function createTransientSessionFailureRuntime() {
   return { client: { auth }, auth, api: null, unavailableReason: '' }
 }
 
+function createTransientBootstrapFailureRuntime() {
+  const auth = {
+    getCurrentUser: async () => ({ data: { user: null }, error: null }),
+    getPublicAuthConfig: async () => { throw new Error('Network request failed: Failed to fetch') },
+    onAuthStateChange: () => () => {},
+  }
+  return { client: { auth }, auth, api: null, unavailableReason: '' }
+}
+
 test('hash routing accepts supported routes and falls back safely', () => {
   assert.equal(routeFromHash('#/app'), '/app')
   assert.equal(routeFromHash('#/reset-password?email=person@example.com'), '/reset-password')
@@ -197,6 +206,14 @@ test('a missing refresh token is treated as signed out, not as an unavailable au
 test('a transient session probe failure does not block public auth forms', async () => {
   window.location.hash = '#/signup'
   await render(createElement(App, { runtimeOverride: createTransientSessionFailureRuntime() }))
+  assert.ok(byId('auth-form'))
+  assert.equal(byId('auth-unavailable'), null)
+  assert.equal(byId('auth-submit').disabled, false)
+})
+
+test('a transient public auth config failure does not block public auth forms', async () => {
+  window.location.hash = '#/signup'
+  await render(createElement(App, { runtimeOverride: createTransientBootstrapFailureRuntime() }))
   assert.ok(byId('auth-form'))
   assert.equal(byId('auth-unavailable'), null)
   assert.equal(byId('auth-submit').disabled, false)
