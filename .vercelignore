@@ -1,0 +1,10 @@
+ECC
+.git
+.vercel
+.env
+.env.*
+node_modules
+dist
+.opencode
+.omnirush
+*.log

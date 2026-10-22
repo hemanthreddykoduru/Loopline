@@ -8,3 +8,4 @@ dist
 .omnirush/
 .opencode/omnirush/
 *.log
+.vercel/
