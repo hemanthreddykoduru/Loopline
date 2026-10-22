@@ -35,6 +35,7 @@ The current product makes the evidence loop legible without inventing a result:
 | 10 | Applied the installed UI skills across landing, auth, dialogs, repository navigation, evidence states, check rows, history, and responsive workspace layout. Added state-aware auth styling, evidence-first hierarchy, skeleton-like loading states, and reduced-motion-safe transform/opacity motion. | [Public/auth surfaces](src/PublicPages.jsx) · [Workspace surfaces](src/Workspace.jsx) · `make test` · `npm run build` | **49 local tests passed.** The cross-page system is implemented; rendered desktop/mobile browser QA remains the final visual check. |
 | 11 | Hardened auth bootstrap so a transient session refresh or public-config request cannot disable the public signup, login, or password-reset forms; added regression cases for the observed browser network failure. | [Auth bootstrap](src/App.jsx) · [Interaction tests](tests/interactions.test.mjs) · `make test` · `npm run build` | **52 local tests passed.** Direct InsForge SDK probes now reach public config and current-user endpoints; rendered browser QA and email verification remain pending. |
 | 12 | Fixed local refresh logout by routing development InsForge auth through a same-origin Vite proxy, allowing the httpOnly refresh cookie to remain usable after a reload; added proxy/config regression coverage. | [Vite proxy](vite.config.js) · [Runtime config](src/loopline-api.js) · [API tests](tests/loopline-api.test.mjs) · `make test` · `npm run build` | **53 local tests passed.** The code path and proxy configuration are verified locally; a live authenticated reload still depends on the browser reaching InsForge. |
+| 13 | Hardened the current workspace and release contract: stale saved evidence remains visibly stale after reload, API cooldown hints reach the user, frontend repository validation matches the backend, optional local function calls use the Vite proxy, Docker preview origins are allowed, and CI checks the edge source and whitespace. | [Workspace](src/Workspace.jsx) · [Backend](functions/loopline-api.mjs) · [Vite proxy](vite.config.js) · [CI](.github/workflows/deploy-pages.yml) · `npm test` · `npm run build` | **57 local tests passed.** Backend source syntax, production build, and whitespace checks passed. Real browser refresh, live deployment of the current branch, Docker daemon execution, and TestSprite cloud evidence remain pending. |
 
 ## UI audit evidence — 2026-10-16
 
@@ -57,7 +58,7 @@ Responsive CSS now wraps narrow headers/actions and long metadata, uses flexible
 
 A local built-in-browser image confirmed the updated light overview at **310 × 685** with the heading and primary actions fitting inside the viewport. An attempted New release click timed out; a fresh observation showed the unchanged overview. No browser-interaction success is claimed. Desktop/tablet/other mobile widths, zoom, short-screen overlays, real keyboard/touch behaviour, and rendered animation smoothness remain unverified.
 
-These are local audit results, not a fresh Linux CI run or a deployment of this iteration. The pinned runtime remains Node `22.11.0`; this machine's checks used Node `26.7.0` / npm `11.19.0`. Docker execution is still blocked by the unavailable local daemon.
+These are local audit results, not a fresh Linux CI run or a deployment of this iteration. The pinned runtime remains Node `22.11.0`; this machine's latest checks used Node `26.12.0` / npm `11.20.0`. Docker execution is still blocked by the unavailable local daemon.
 
 ## TestSprite cloud evidence
 
@@ -80,19 +81,17 @@ The final submission should show at least one real check on PR [#1](https://gith
 
 ## Planned browser coverage
 
-The generated suite should cover the observable product surface:
+The generated suite should cover the current observable product surface:
 
-- Overview loads with release metrics and the selected release.
-- Sidebar navigation switches between Overview, Releases, Test runs, and Settings.
-- Release search filters by name, version, branch, and commit.
-- Status filtering and **Clear filters** restore the full queue.
-- New release validation shows all three required-field errors.
-- A valid new release appears as queued and becomes selected.
-- The Checkout refresh verification bundle exposes the failed browser journey.
-- Applying the suggested fix closes the bundle and turns the release green.
-- Running verification exposes the running state, then the passed state.
-- Settings toggles are interactive and the demo disclosure remains visible.
-- Dialog keyboard/backdrop dismissal, local utility controls, retained notifications/activity, and independent background verification behave as described in the UI audit above.
+- Landing page copy, public read-only disclosure, navigation, and auth-route links.
+- Sign-up, sign-in, verification-code handoff, forgot-password, and reset-password validation.
+- Auth bootstrap with no session, a restored session, and a transient refresh/config failure.
+- Authenticated workspace empty state, sign-out, and refresh/session restoration.
+- Connect-repository dialog validation, TestSprite policy selection, success, failure, and retry guidance.
+- Repository list loading/error/retry, selected repository detail, and disconnect confirmation.
+- Default-branch and observed-PR target selection, exact SHA display, source links, and saved history.
+- Ready, blocked, running, unverified, stale, sync-failure, cooldown, and missing-evidence states.
+- Keyboard focus, Escape/backdrop dialog dismissal, responsive desktop/tablet/mobile layouts, short viewports, zoom, touch targets, and reduced-motion behavior.
 
 ## Honest limitations
 

@@ -49,7 +49,7 @@ The single offline-friendly test command is:
 make test
 ```
 
-After `npm ci`, tests use only local dependencies and require no external service or account. The Node built-in test runner covers the integrated route/auth/workspace smoke flow, the API adapter contract and nested backend errors, backend policy/security, retained legacy release helpers, and light-theme token contrast. Run `node --test` to see the current case count; do not interpret these offline tests as authenticated production persistence or real GitHub/TestSprite evidence.
+After `npm ci`, tests use only local dependencies and require no external service or account. The Node built-in test runner covers the integrated route/auth/workspace smoke flow, the API adapter contract and nested backend errors, backend policy/security, retained legacy release helpers, and light-theme token contrast. `npm test` explicitly runs the repository's `tests/*.mjs` suite; do not interpret these offline tests as authenticated production persistence or real GitHub/TestSprite evidence.
 
 JSDOM tests exercise component behaviour with controlled timers; they do **not** render layouts or prove browser keyboard defaults, animation smoothness, touch targeting, or complete accessibility. Token contrast checks are not a full WCAG audit. Rendered desktop/mobile checks remain a separate step; see [LOOP.md](LOOP.md) for actual evidence and gaps.
 
@@ -82,7 +82,7 @@ docker build \
 
 ## Deploy
 
-Loopline is a static Vite app and can be deployed to Vercel, Netlify, Cloudflare Pages, GitHub Pages, or any static host. The InsForge values are compiled into the browser bundle, so provide only the public base URL, anonymous key, and direct functions URL at build time.
+Loopline is a static Vite app and can be deployed to GitHub Pages or another static host whose origin is allowed by the backend. The InsForge values are compiled into the browser bundle, so provide only the public base URL, anonymous key, and direct functions URL at build time. For a new host, add its exact HTTPS origin to `ORIGINS` in `functions/loopline-api.mjs` and redeploy the function before enabling connected API calls.
 
 Build command:
 
@@ -93,6 +93,8 @@ npm ci && npm run build
 The included GitHub Pages workflow reads `VITE_INSFORGE_BASE_URL` and `VITE_INSFORGE_FUNCTIONS_URL` from repository variables and `VITE_INSFORGE_ANON_KEY` from a repository secret when they are configured. An unset value intentionally leaves the deployed app in its unavailable-service state.
 
 Publish directory: `dist`
+
+The local Vite server proxies `/api` and `/functions` to InsForge during development, so auth refresh cookies and the optional functions URL fallback remain same-origin. The Docker preview uses port `4173`, which is included in the backend origin allowlist.
 
 For a Vercel deployment, install the Vercel CLI locally or use the Vercel dashboard, then run the platform's normal project import flow. Do not put tokens in this repository; use the platform's environment-variable settings.
 

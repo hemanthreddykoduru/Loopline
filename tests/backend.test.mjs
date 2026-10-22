@@ -403,7 +403,7 @@ test('disconnect deletes only the authenticated owner connection through the adm
 
 test('CORS, JSON shape, method, UUID, PR number and body size are validated', async () => {
   const fixture = memoryBoundary();
-  for (const origin of ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://hemanthreddykoduru.github.io']) {
+  for (const origin of ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:4173', 'http://127.0.0.1:4173', 'https://hemanthreddykoduru.github.io']) {
     const response = await fixture.handler(new Request('https://service.example.com', { method: 'OPTIONS', headers: { origin } }));
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('access-control-allow-origin'), origin);

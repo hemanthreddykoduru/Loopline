@@ -358,3 +358,114 @@ test('the workspace syncs the selected PR target and renders its exact commit ev
   assert.equal(byId('evidence-sha').textContent, pullSha)
   assert.equal(byId('evidence-status').dataset.conclusion, 'ready')
 })
+
+test('an initially stale saved snapshot renders stale status and guidance after load', async () => {
+  const project = {
+    id: 'project-stale',
+    full_name: 'owner/stale-repository',
+    description: null,
+    default_branch: 'main',
+    html_url: 'https://github.com/owner/stale-repository',
+    created_at: '2026-10-16T10:00:00.000Z',
+    last_synced_at: '2026-10-16T10:00:00.000Z',
+    require_testsprite: true,
+  }
+  const snapshot = {
+    id: 'snapshot-stale',
+    head_sha: 'c'.repeat(40),
+    ref_name: 'main',
+    pr_number: null,
+    pr_title: null,
+    html_url: project.html_url,
+    conclusion: 'unverified',
+    checked_at: '2026-10-16T10:00:00.000Z',
+    checks: [],
+    summary: { total: 0, passed: 0, failed: 0, pending: 0 },
+    reason: 'GitHub could not be read.',
+    stale: true,
+    current: false,
+  }
+  const detail = { project, snapshot, pullRequests: [], history: [snapshot] }
+  const api = {
+    listProjects: async () => [project],
+    getProject: async () => detail,
+    syncProject: async () => detail,
+    connectProject: async () => detail,
+    disconnectProject: async () => ({ success: true }),
+  }
+
+  window.location.hash = '#/app'
+  await render(createElement(App, {
+    runtimeOverride: createAuthRuntime({ user: { id: 'user-stale', email: 'stale@example.com', profile: {} }, api }),
+  }))
+
+  assert.equal(byId('evidence-status').dataset.conclusion, 'stale')
+  assert.match(byId('evidence-status').textContent, /Stale · sync required/)
+  assert.match(document.querySelector('.ws-stale-note').textContent, /previous evidence, not a current readiness result/)
+})
+
+test('workspace error messages include a human-readable retry hint from API errors', async () => {
+  const project = {
+    id: 'project-retry',
+    full_name: 'owner/retry-repository',
+    description: null,
+    default_branch: 'main',
+    html_url: 'https://github.com/owner/retry-repository',
+    created_at: '2026-10-16T10:00:00.000Z',
+    last_synced_at: '2026-10-16T10:00:00.000Z',
+    require_testsprite: true,
+  }
+  const snapshot = {
+    id: 'snapshot-retry',
+    head_sha: 'd'.repeat(40),
+    ref_name: 'main',
+    pr_number: null,
+    pr_title: null,
+    html_url: project.html_url,
+    conclusion: 'unverified',
+    checked_at: '2026-10-16T10:00:00.000Z',
+    checks: [],
+    summary: { total: 0, passed: 0, failed: 0, pending: 0 },
+    reason: 'No published checks were returned.',
+    stale: false,
+    current: true,
+  }
+  const detail = { project, snapshot, pullRequests: [], history: [snapshot] }
+  const api = {
+    listProjects: async () => [project],
+    getProject: async () => detail,
+    syncProject: async () => { throw Object.assign(new Error('GitHub is rate limited.'), { retryAfterSeconds: 9 }) },
+    connectProject: async () => detail,
+    disconnectProject: async () => ({ success: true }),
+  }
+
+  window.location.hash = '#/app'
+  await render(createElement(App, {
+    runtimeOverride: createAuthRuntime({ user: { id: 'user-retry', email: 'retry@example.com', profile: {} }, api }),
+  }))
+  await click('sync-project')
+
+  assert.match(byId('sync-error').textContent, /GitHub is rate limited\. Try again in 9 seconds\./)
+})
+
+test('repository URL validation rejects the www.github.com hostname before connecting', async () => {
+  let connectCalls = 0
+  const api = {
+    listProjects: async () => [],
+    getProject: async () => ({}),
+    syncProject: async () => ({}),
+    connectProject: async () => { connectCalls += 1; return {} },
+    disconnectProject: async () => ({ success: true }),
+  }
+
+  window.location.hash = '#/app'
+  await render(createElement(App, {
+    runtimeOverride: createAuthRuntime({ user: { id: 'user-validation', email: 'validation@example.com', profile: {} }, api }),
+  }))
+  await click('connect-repository-open')
+  await fill('connect-repository-input', 'https://www.github.com/owner/repository')
+  await click('connect-repository-submit')
+
+  assert.equal(connectCalls, 0)
+  assert.match(byId('connect-repository-field-error').textContent, /HTTPS github\.com repository URL/)
+})

@@ -17,15 +17,19 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: proxyTarget ? {
       proxy: {
-        '/insforge': {
-          target: proxyTarget,
-          changeOrigin: true,
-          secure: true,
-          rewrite: (path) => path.replace(/^\/insforge/, ''),
-          // Keep the httpOnly refresh cookie on whichever local host opened Vite.
-          cookieDomainRewrite: '',
-        },
+        '/api': createInsForgeProxy(proxyTarget),
+        '/functions': createInsForgeProxy(proxyTarget),
       },
     } : undefined,
   }
 })
+
+function createInsForgeProxy(target) {
+  return {
+    target,
+    changeOrigin: true,
+    secure: true,
+    // Keep the httpOnly refresh cookie on whichever local host opened Vite.
+    cookieDomainRewrite: '',
+  }
+}

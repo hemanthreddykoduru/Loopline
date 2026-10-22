@@ -25,7 +25,13 @@ const conclusionLabels = {
 }
 
 function errorMessage(error, fallback) {
-  return typeof error?.message === 'string' && error.message.trim() ? error.message : fallback
+  const message = typeof error?.message === 'string' && error.message.trim() ? error.message : fallback
+  const nested = error?.error
+  const retryAfterSeconds = error?.retryAfterSeconds ?? (nested !== null && typeof nested === 'object' ? nested.retryAfterSeconds : undefined)
+  const seconds = Number(retryAfterSeconds)
+  if (!Number.isFinite(seconds) || seconds <= 0) return message
+  const roundedSeconds = Math.ceil(seconds)
+  return `${message} Try again in ${roundedSeconds} second${roundedSeconds === 1 ? '' : 's'}.`
 }
 
 function sourceUrl(value) {
@@ -69,24 +75,12 @@ function snapshotAge(value) {
 }
 
 function repositoryName(value) {
-  let name = value.trim().replace(/\/+$/, '')
-  if (/^https:\/\//i.test(name)) {
-    let url
-    try {
-      url = new URL(name)
-    } catch {
-      return null
-    }
-    if (!['github.com', 'www.github.com'].includes(url.hostname) || url.port || url.username || url.password || url.search || url.hash) return null
-    name = url.pathname.replace(/^\/+|\/+$/g, '')
-  }
-  name = name.replace(/\.git$/i, '')
-  const parts = name.split('/')
-  if (parts.length !== 2) return null
-  const [owner, repository] = parts
-  if (!/^(?!.*--)[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?$/i.test(owner)) return null
-  if (!/^[a-z\d_.-]{1,100}$/i.test(repository) || ['.', '..'].includes(repository)) return null
-  return `${owner}/${repository}`
+  if (typeof value !== 'string' || value.length > 300 || /[\x00-\x1f\x7f\\%]/.test(value)) return null
+  const input = value.trim()
+  const match = input.match(/^https:\/\/github\.com\/([^/?#]+)\/([^/?#]+)\/?$/i) || input.match(/^([^/]+)\/([^/]+)$/)
+  if (!match || !/^[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?$/i.test(match[1])
+    || !/^[a-z\d_.-]{1,100}$/i.test(match[2]) || /^\.{1,2}$/.test(match[2])) return null
+  return `${match[1]}/${match[2]}`
 }
 
 function readDetail(value, expectedId) {
@@ -286,7 +280,7 @@ function WorkspaceSession({ user, api, onSignOut, navigate }) {
     setDetailError('')
     setDetailLoading(false)
     setPullNumber(next.snapshot?.pr_number != null ? String(next.snapshot.pr_number) : 'branch')
-    setStale(false)
+    setStale(next.snapshot?.stale === true)
     setSyncError('')
     updateProject(next.project)
   }

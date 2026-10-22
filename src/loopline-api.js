@@ -22,7 +22,8 @@ function validHttpUrl(value) {
 
 function resolveBrowserBaseUrl(baseUrl, env) {
   if (env?.DEV !== true || typeof window === 'undefined' || !validHttpUrl(window.location?.origin)) return baseUrl
-  return new URL('/insforge', window.location.origin).toString().replace(/\/$/, '')
+  // The SDK builds auth URLs from root-relative /api paths, so proxy at the local origin.
+  return window.location.origin
 }
 
 function viteEnv() {

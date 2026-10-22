@@ -1,5 +1,11 @@
 // Single-file Deno ESM deployment; pure helpers also run in Node's offline test runner.
-const ORIGINS = new Set(['http://localhost:5173', 'http://127.0.0.1:5173', 'https://hemanthreddykoduru.github.io']);
+const ORIGINS = new Set([
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+  'https://hemanthreddykoduru.github.io',
+]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHA = /^[0-9a-f]{40}$/;
 export const LIMITS = Object.freeze({ bodyBytes: 4096, githubReads: 8, checks: 100, history: 10, pulls: 20, projects: 5,

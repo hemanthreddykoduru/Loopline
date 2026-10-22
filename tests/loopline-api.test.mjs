@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { createClient } from '@insforge/sdk'
 import {
   createLooplineApi,
   normalizeLooplineError,
@@ -29,7 +30,7 @@ test('public InsForge configuration requires a base URL and anonymous key', () =
   }).unavailableReason, /VITE_INSFORGE_FUNCTIONS_URL/)
 })
 
-test('browser development auth uses a same-origin proxy for refresh cookies', () => {
+test('browser development auth uses a same-origin proxy for refresh cookies', async () => {
   const previousWindow = globalThis.window
   globalThis.window = { location: { origin: 'http://127.0.0.1:5173' } }
   try {
@@ -38,7 +39,37 @@ test('browser development auth uses a same-origin proxy for refresh cookies', ()
       VITE_INSFORGE_BASE_URL: 'https://example.insforge.app',
       VITE_INSFORGE_ANON_KEY: 'public-anon-key',
     })
-    assert.equal(result.config.baseUrl, 'http://127.0.0.1:5173/insforge')
+    assert.equal(result.config.baseUrl, 'http://127.0.0.1:5173')
+    const requests = []
+    const client = createClient({
+      ...result.config,
+      fetch: async (input) => {
+        requests.push(String(input))
+        return { ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({}) }
+      },
+    })
+    await client.auth.refreshSession()
+    await client.functions.invoke('loopline-api', { body: { action: 'health' } })
+    assert.deepEqual(requests, [
+      'http://127.0.0.1:5173/api/auth/refresh',
+      'http://127.0.0.1:5173/functions/loopline-api',
+    ])
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window
+    else globalThis.window = previousWindow
+  }
+})
+
+test('production auth keeps the real InsForge base URL', () => {
+  const previousWindow = globalThis.window
+  globalThis.window = { location: { origin: 'http://127.0.0.1:5173' } }
+  try {
+    const result = readInsForgePublicConfig({
+      DEV: false,
+      VITE_INSFORGE_BASE_URL: 'https://example.insforge.app',
+      VITE_INSFORGE_ANON_KEY: 'public-anon-key',
+    })
+    assert.equal(result.config.baseUrl, 'https://example.insforge.app')
   } finally {
     if (previousWindow === undefined) delete globalThis.window
     else globalThis.window = previousWindow
