@@ -52,7 +52,8 @@ export function safeEvidenceUrl(value) {
 }
 
 export function buildGitHubUrl(path) {
-  if (typeof path !== 'string' || !path.startsWith('/repos/') || /[\\\s#]/.test(path) || /(?:^|\/)\.{1,2}(?:\/|$)/.test(path)) throw invalid('Invalid GitHub API path.');
+  if (typeof path !== 'string' || !path.startsWith('/repos/') || /[\\\s#]/.test(path)
+    || /(?:^|\/)(?:(?:%2e|\.){1,2})(?:\/|$)/i.test(path)) throw invalid('Invalid GitHub API path.');
   const url = new URL(path, 'https://api.github.com');
   if (url.origin !== 'https://api.github.com' || !url.pathname.startsWith('/repos/')) throw invalid('Invalid GitHub API origin.');
   return url.href;
@@ -96,7 +97,7 @@ export function normalizeChecks(headSha, checkRuns, commitStatus) {
       provider: `commit-status:${text(item.creator?.login, 100) || 'unknown'}`,
       provider_key: `status:${item.creator?.id || 'unknown'}`, app_id: null, verified_testsprite: false,
       status: pending ? 'in_progress' : 'completed', conclusion,
-      html_url: safeEvidenceUrl(item.target_url) || safeEvidenceUrl(commitStatus.html_url), head_sha: headSha,
+      html_url: safeEvidenceUrl(item.target_url), head_sha: headSha,
       completed_at: pending ? null : date(item.updated_at || item.created_at) });
   }
   const latest = new Map();
@@ -214,9 +215,11 @@ export async function readGitHubSnapshot(github, repository, requireTestSprite, 
   const root = `/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}`;
   const budget = { reads: 0 };
   const { data: repo } = await github(root, budget);
-  if (repo?.private !== false || repo?.visibility && repo.visibility !== 'public')
+  if (repo?.private !== false || repo?.visibility !== 'public')
     throw new ApiError(400, 'PUBLIC_REPOSITORY_REQUIRED', 'Only public GitHub repositories are supported.');
-  const canonical = parseRepository(repo.full_name);
+  let canonical;
+  try { canonical = parseRepository(repo.full_name); }
+  catch { throw upstream(); }
   if (canonical.fullName.toLowerCase() !== parsed.fullName.toLowerCase() || !text(repo.default_branch, 255)) throw upstream();
   const project = { full_name: canonical.fullName, description: text(repo.description, 4096),
     default_branch: repo.default_branch.slice(0, 255), html_url: `https://github.com/${canonical.fullName}`, require_testsprite: requireTestSprite };

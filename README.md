@@ -18,8 +18,9 @@ The interface uses a light theme with neutral surfaces, green actions, and disti
 
 Requirements:
 
-- Node.js `22.11.0` (the version is pinned in `.nvmrc`)
-- npm 10+
+- Node.js `22.11.0` (pinned in `.nvmrc`, `package.json`, CI, and Docker)
+- npm `10.x` (the supported major for the pinned Node release)
+- `make` for the repository shortcuts below (or use the equivalent npm commands)
 
 ```bash
 nvm install
@@ -43,13 +44,19 @@ The anonymous key is a browser public key, not a privileged InsForge or GitHub s
 
 ## Checks
 
-The single offline-friendly test command is:
+The offline-friendly test command is:
 
 ```bash
 make test
 ```
 
-After `npm ci`, tests use only local dependencies and require no external service or account. The Node built-in test runner covers the integrated route/auth/workspace smoke flow, the API adapter contract and nested backend errors, backend policy/security, retained legacy release helpers, and light-theme token contrast. `npm test` explicitly runs the repository's `tests/*.mjs` suite; do not interpret these offline tests as authenticated production persistence or real GitHub/TestSprite evidence.
+For the same test-plus-production-build gate used during local release checks:
+
+```bash
+make verify
+```
+
+After `npm ci`, tests use only local dependencies and require no external service or account. The Node built-in test runner covers the integrated route/auth/workspace smoke flow, the API adapter contract and nested backend errors, backend policy/security, retained legacy release helpers, and light-theme token contrast. `npm test` runs the repository's `tests/*.mjs` suite sequentially; do not interpret these offline tests as authenticated production persistence or real GitHub/TestSprite evidence.
 
 JSDOM tests exercise component behaviour with controlled timers; they do **not** render layouts or prove browser keyboard defaults, animation smoothness, touch targeting, or complete accessibility. Token contrast checks are not a full WCAG audit. Rendered desktop/mobile checks remain a separate step; see [LOOP.md](LOOP.md) for actual evidence and gaps.
 
@@ -58,6 +65,8 @@ The production build can be checked with:
 ```bash
 npm run build
 ```
+
+The lockfile is the install contract: use `npm ci` on a clean checkout rather than `npm install` when reproducing CI or a release build.
 
 ## Docker
 
@@ -68,17 +77,19 @@ docker build -t loopline .
 docker run --rm -p 4173:4173 loopline
 ```
 
-Open `http://localhost:4173`.
+Open `http://localhost:4173`. The container pins preview to port `4173` and reports healthy only after that URL returns a successful response.
 
 The image also accepts optional build arguments for a connected static build. Omitting them still produces a reproducible build with the explicit unavailable-service state:
 
 ```bash
 docker build \
-  --build-arg VITE_INSFORGE_BASE_URL=https://<app-key>.<region>.insforge.app \
-  --build-arg VITE_INSFORGE_ANON_KEY=<public-anonymous-key> \
-  --build-arg VITE_INSFORGE_FUNCTIONS_URL=https://<app-key>.function2.insforge.app \
+  --build-arg VITE_INSFORGE_BASE_URL="https://<app-key>.<region>.insforge.app" \
+  --build-arg VITE_INSFORGE_ANON_KEY="<public-anonymous-key>" \
+  --build-arg VITE_INSFORGE_FUNCTIONS_URL="https://<app-key>.function2.insforge.app" \
   -t loopline .
 ```
+
+These build arguments are public browser configuration. Do not pass `INSFORGE_BASE_URL`, `API_KEY`, or `GITHUB_TOKEN` to this image.
 
 ## Deploy
 
@@ -90,11 +101,18 @@ Build command:
 npm ci && npm run build
 ```
 
-The included GitHub Pages workflow reads `VITE_INSFORGE_BASE_URL` and `VITE_INSFORGE_FUNCTIONS_URL` from repository variables and `VITE_INSFORGE_ANON_KEY` from a repository secret when they are configured. An unset value intentionally leaves the deployed app in its unavailable-service state.
+For GitHub Pages, set the repository up once before relying on connected features:
+
+1. In **Settings → Pages**, set the source to **GitHub Actions**.
+2. In **Settings → Secrets and variables → Actions → Variables**, add `VITE_INSFORGE_BASE_URL` and `VITE_INSFORGE_FUNCTIONS_URL`.
+3. In the same Actions settings, add `VITE_INSFORGE_ANON_KEY` as a repository secret. It is a public browser key after the build; storing it as a secret prevents accidental exposure in repository settings, but does not make it private at runtime.
+4. Keep the deployment origin in the backend `ORIGINS` allowlist. For the published app the origin is `https://hemanthreddykoduru.github.io` (the `/Loopline/` path is not part of an origin).
+
+The included workflow reads those names from the GitHub Actions variables/secret and runs `make test`, source/whitespace gates, and the production build before uploading `dist`. An unset value intentionally leaves the deployed app in its unavailable-service state. Pull requests run validation only; the Pages artifact is deployed from a `main` push or an explicitly approved workflow dispatch, so unreviewed PR code does not replace the public site.
 
 Publish directory: `dist`
 
-The local Vite server proxies `/api` and `/functions` to InsForge during development, so auth refresh cookies and the optional functions URL fallback remain same-origin. The Docker preview uses port `4173`, which is included in the backend origin allowlist.
+The local Vite server proxies `/api` and `/functions` to InsForge during development, so auth refresh cookies and the optional functions URL fallback remain same-origin. The Docker preview uses port `4173`, which is included in the backend origin allowlist. Add any new static-host origin to `ORIGINS` in `functions/loopline-api.mjs` and redeploy the function before enabling connected API calls there.
 
 For a Vercel deployment, install the Vercel CLI locally or use the Vercel dashboard, then run the platform's normal project import flow. Do not put tokens in this repository; use the platform's environment-variable settings.
 

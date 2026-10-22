@@ -34,6 +34,7 @@ Loopline applies that pattern to release readiness:
 - Build/deploy workflow: [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml)
 - Verification log: [LOOP.md](LOOP.md)
 - Local test command: `make test`
+- Local release gate: `make verify`
 
 ## Rubric map
 
@@ -49,7 +50,7 @@ Loopline applies that pattern to release readiness:
 - [x] Public GitHub repository
 - [x] Public live URL
 - [x] README with app, URL, and suite scope
-- [x] Open PR with a successful build/deploy workflow
+- [x] Open PR with a successful build validation; production Pages deployment is gated to `main`
 - [ ] TestSprite project and browser suite created
 - [ ] GitHub App connected to `hemanthreddykoduru/Loopline`
 - [ ] TestSprite PR check/comment visible on PR #1

@@ -39,7 +39,7 @@ test('repository parser accepts only GitHub repository identifiers and exact HTT
 
 test('API origin is pinned and evidence links reject unsafe schemes, credentials and local addresses', () => {
   assert.equal(buildGitHubUrl('/repos/octocat/project/branches/feature%2Fx'), 'https://api.github.com/repos/octocat/project/branches/feature%2Fx');
-  for (const path of ['https://evil.com', '//evil.com/repos/o/r', '/repos/../private', '/repos/o/r\\@evil.com', '/other/o/r'])
+  for (const path of ['https://evil.com', '//evil.com/repos/o/r', '/repos/../private', '/repos/o/r/%2e%2e/private', '/repos/o/r\\@evil.com', '/other/o/r'])
     assert.throws(() => buildGitHubUrl(path), ApiError);
   assert.equal(safeEvidenceUrl('https://github.com/o/r/actions/runs/1'), 'https://github.com/o/r/actions/runs/1');
   for (const url of ['javascript:alert(1)', 'data:text/html,x', 'http://example.com/a', 'https://user:password@example.com/a',
@@ -70,6 +70,15 @@ test('real current success, failure and pending states aggregate conservatively'
     assert.equal(readiness([run({ conclusion })]).conclusion, 'unverified', conclusion);
   assert.equal(readiness([run({ completed_at: null })]).conclusion, 'unverified');
   assert.equal(readiness([run({ html_url: 'javascript:alert(1)' })]).conclusion, 'unverified');
+});
+
+test('a commit status without its own reported target URL cannot establish successful evidence', () => {
+  const missingLink = status({ target_url: null });
+  const result = readiness([], [missingLink], {
+    commitStatus: { sha: HEAD, total_count: 1, statuses: [missingLink], html_url: `${URL_ROOT}/commit/${HEAD}` },
+  });
+  assert.equal(result.checks[0].html_url, null);
+  assert.equal(result.conclusion, 'unverified');
 });
 
 test('reruns deduplicate by provider/name and new queued runs supersede old successes', () => {
@@ -139,13 +148,15 @@ test('rate limits, redirects, upstream errors and timeouts become sanitized non-
   await assert.rejects(() => slow('/repos/o/r', { reads: 0 }), error => error.status === 504 && error.code === 'GITHUB_TIMEOUT');
 });
 
-function fakeGitHub({ head = HEAD, prHead = OLD, runs, privateRepo = false, now = Date.now, onRateLimit } = {}) {
+function fakeGitHub({ head = HEAD, prHead = OLD, runs, privateRepo = false, fullName = 'octocat/project', includeVisibility = true,
+  now = Date.now, onRateLimit } = {}) {
   const paths = [];
   const github = createGitHubReader({ fetchImpl: async (url, options) => {
     const path = new URL(url).pathname;
     paths.push(path);
     assert.equal(options.method, 'GET');
-    if (path === '/repos/octocat/project') return respond({ full_name: 'octocat/project', private: privateRepo, visibility: privateRepo ? 'private' : 'public', default_branch: 'main', description: 'Public repository' });
+    if (path === '/repos/octocat/project') return respond({ full_name: fullName, private: privateRepo,
+      ...(includeVisibility ? { visibility: privateRepo ? 'private' : 'public' } : {}), default_branch: 'main', description: 'Public repository' });
     if (path.endsWith('/branches/main') && !path.includes('/rules/')) return respond({ commit: { sha: head }, protected: false });
     if (path.endsWith('/rules/branches/main')) return respond([]);
     const pullMatch = path.match(/\/pulls\/(\d+)$/);
@@ -180,6 +191,12 @@ test('snapshot reads public metadata and evidence for exact default or PR HEAD, 
   assert.ok(paths.length <= 13);
   const mismatched = fakeGitHub({ runs: [run({ head_sha: OLD })] });
   assert.equal((await readGitHubSnapshot(mismatched.github, 'octocat/project', false)).snapshot.conclusion, 'unverified');
+  const missingVisibility = fakeGitHub({ includeVisibility: false });
+  await assert.rejects(() => readGitHubSnapshot(missingVisibility.github, 'octocat/project', false), error => error.code === 'PUBLIC_REPOSITORY_REQUIRED');
+  assert.equal(missingVisibility.paths.length, 1);
+  const malformedMetadata = fakeGitHub({ fullName: 'octocat/project/tree/main' });
+  await assert.rejects(() => readGitHubSnapshot(malformedMetadata.github, 'octocat/project', false), error => error.code === 'GITHUB_UNAVAILABLE');
+  assert.equal(malformedMetadata.paths.length, 1);
   const privateSource = fakeGitHub({ privateRepo: true });
   await assert.rejects(() => readGitHubSnapshot(privateSource.github, 'octocat/project', false), error => error.code === 'PUBLIC_REPOSITORY_REQUIRED');
   assert.equal(privateSource.paths.length, 1);

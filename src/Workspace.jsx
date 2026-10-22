@@ -24,6 +24,10 @@ const conclusionLabels = {
   unverified: 'Not verified',
 }
 
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
 function errorMessage(error, fallback) {
   const message = typeof error?.message === 'string' && error.message.trim() ? error.message : fallback
   const nested = error?.error
@@ -89,9 +93,9 @@ function readDetail(value, expectedId) {
   }
   return {
     project: value.project,
-    snapshot: value.snapshot || null,
-    pullRequests: Array.isArray(value.pullRequests) ? value.pullRequests : [],
-    history: Array.isArray(value.history) ? value.history : [],
+    snapshot: isRecord(value.snapshot) ? value.snapshot : null,
+    pullRequests: Array.isArray(value.pullRequests) ? value.pullRequests.filter(isRecord) : [],
+    history: Array.isArray(value.history) ? value.history.filter(isRecord) : [],
   }
 }
 
@@ -111,7 +115,7 @@ function Summary({ summary }) {
 
 export function EvidencePanel({ project = null, snapshot = null, onConnect, compact = false, stale = false }) {
   const headingId = useId()
-  const checks = Array.isArray(snapshot?.checks) ? snapshot.checks : []
+  const checks = Array.isArray(snapshot?.checks) ? snapshot.checks.filter(isRecord) : []
   const hasCommit = typeof snapshot?.head_sha === 'string' && Boolean(snapshot.head_sha.trim())
   const missingEvidence = !checks.length || !hasCommit || checks.some((check) => !check.status || !check.head_sha || check.head_sha !== snapshot.head_sha || !['success', 'passed', 'neutral', 'skipped'].includes(String(check.conclusion || check.status).toLowerCase()))
   const recordedConclusion = Object.hasOwn(conclusionLabels, snapshot?.conclusion) ? snapshot.conclusion : 'unverified'
@@ -449,7 +453,7 @@ function WorkspaceSession({ user, api, onSignOut, navigate }) {
 
   return (
     <div className="ws-workspace" data-testid="workspace">
-      <a className="ws-skip-link" href="#/app" onClick={(event) => { event.preventDefault(); document.getElementById('main-content')?.focus() }}>Skip to repository evidence</a>
+      <a className="ws-skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); document.getElementById('main-content')?.focus() }}>Skip to repository evidence</a>
       <header className="ws-topbar">
         <div className="ws-topbar-brand"><Brand /><span className="ws-topbar-divider" aria-hidden="true" /><span>Workspace</span></div>
         <div className="ws-account">

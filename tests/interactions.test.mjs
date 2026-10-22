@@ -178,12 +178,17 @@ test('the public landing page links to an unavailable auth state without backend
   assert.ok(byId('landing-preview').querySelector('.pub-evidence-preview'))
   assert.equal(document.querySelectorAll('.pub-section-index').length, 0)
   assert.equal(document.querySelector('.pub-hero h1').textContent, 'Ship the right commit.')
+  for (const id of ['landing-nav-repository', 'landing-source-link', 'landing-footer-repository']) {
+    assert.equal(byId(id).getAttribute('target'), '_blank')
+    assert.deepEqual(byId(id).getAttribute('rel').split(/\s+/).sort(), ['noopener', 'noreferrer'])
+  }
 
   await click('landing-nav-login')
   assert.equal(window.location.hash, '#/login')
   assert.ok(byId('auth-form'))
   assert.match(byId('auth-unavailable').textContent, /InsForge is not configured/)
   assert.equal(byId('auth-submit').disabled, true)
+  assert.deepEqual(byId('auth-source-link').getAttribute('rel').split(/\s+/).sort(), ['noopener', 'noreferrer'])
 
   await click('auth-nav-home')
   assert.ok(byId('landing-hero-cta'))
@@ -276,7 +281,72 @@ test('an existing authenticated session opens an empty workspace without inventi
   assert.ok(byId('workspace'))
   assert.equal(byId('workspace-user-email').textContent, 'restored@example.com')
   assert.ok(byId('projects-empty'))
+  const skipLink = document.querySelector('.ws-skip-link')
+  assert.equal(skipLink.getAttribute('href'), '#main-content')
+  await act(async () => {
+    skipLink.click()
+    await flushAsyncWork()
+  })
+  assert.equal(document.activeElement.id, 'main-content')
   assert.equal(document.querySelectorAll('[data-testid^="project-select-"]').length, 0)
+})
+
+test('malformed remote collections degrade to safe evidence and history rows', async () => {
+  const project = {
+    id: 'project-malformed',
+    full_name: 'owner/malformed-repository',
+    description: null,
+    default_branch: 'main',
+    html_url: 'https://github.com/owner/malformed-repository',
+    created_at: '2026-10-16T10:00:00.000Z',
+    last_synced_at: '2026-10-16T10:00:00.000Z',
+    require_testsprite: true,
+  }
+  const sha = 'e'.repeat(40)
+  const snapshot = {
+    id: 'snapshot-malformed',
+    head_sha: sha,
+    ref_name: 'main',
+    pr_number: null,
+    pr_title: null,
+    html_url: project.html_url,
+    conclusion: 'unverified',
+    checked_at: '2026-10-16T10:00:00.000Z',
+    checks: [null, {
+      id: 'check-safe',
+      name: 'Published check',
+      provider: 'GitHub',
+      status: 'completed',
+      conclusion: 'neutral',
+      head_sha: sha,
+      html_url: project.html_url,
+      completed_at: '2026-10-16T10:00:00.000Z',
+    }],
+    summary: { total: 1, passed: 0, failed: 0, pending: 0 },
+    reason: 'One check was returned.',
+  }
+  const api = {
+    listProjects: async () => [project],
+    getProject: async () => ({
+      project,
+      snapshot,
+      pullRequests: [null, { number: 4, title: 'Safe PR', head_sha: sha, head_ref: 'feature/safe', html_url: project.html_url }],
+      history: [null, snapshot],
+    }),
+    syncProject: async () => ({}),
+    connectProject: async () => ({}),
+    disconnectProject: async () => ({ success: true }),
+  }
+
+  window.location.hash = '#/app'
+  await render(createElement(App, {
+    runtimeOverride: createAuthRuntime({ user: { id: 'user-malformed', email: 'safe@example.com', profile: {} }, api }),
+  }))
+
+  assert.ok(byId('workspace'))
+  assert.equal(document.querySelectorAll('[data-testid^="evidence-check-"]').length, 1)
+  assert.equal(document.querySelectorAll('[data-testid^="evidence-history-"]').length, 1)
+  assert.equal(byId('pull-request-select').querySelectorAll('option').length, 2)
 })
 
 test('the workspace syncs the selected PR target and renders its exact commit evidence', async () => {

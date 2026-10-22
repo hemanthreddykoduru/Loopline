@@ -64,9 +64,21 @@ These are local audit results, not a fresh Linux CI run or a deployment of this 
 
 - InsForge function `loopline-api` was redeployed successfully and its public health action returned HTTP 200 with storage available.
 - Direct function CORS preflights returned 204 for GitHub Pages and both Docker preview origins; an unlisted origin returned 403.
-- GitHub Pages deployment for commit [`a793c17`](https://github.com/hemanthreddykoduru/Loopline/commit/a793c17) completed successfully. The public bundle contains the current repository workspace, same-origin auth refresh path, and configured InsForge endpoints; the old release-demo bundle is no longer served.
+- GitHub Pages deployment for commit [`a793c17`](https://github.com/hemanthreddykoduru/Loopline/commit/a793c17) completed successfully. The bundle produced from that deployed commit contains the repository workspace, same-origin auth refresh path, and configured InsForge endpoints; the old release-demo bundle is no longer served.
 - Built-in browser observation at 1280 × 800 confirmed the live landing page, login form, signup form, and unauthenticated `/app` redirect. No credentials or verification codes were entered during this check.
-- The live PR deployment checks `build` and `deploy` passed. GitGuardian still reports two historical generic-password findings from commit `9d3b756`; those findings are false positives in validation/URL-regex source, but they keep that external check red until dismissed or the branch history is rewritten by an authorized maintainer.
+- The earlier live PR deployment checks `build` and `deploy` passed. The workflow is now hardened so pull requests validate without publishing to the public Pages environment; deployment is reserved for `main` or an explicitly approved dispatch. GitGuardian still reports two historical generic-password findings from commit `9d3b756`; those findings are false positives in validation/URL-regex source, but they keep that external check red until dismissed or the branch history is rewritten by an authorized maintainer.
+
+## Current checkout verification — 2026-10-22
+
+- `npm ci --ignore-scripts` completed from the committed lockfile.
+- `npm test`: **59 passed**, including 29 backend cases; no failures, skips, or todos.
+- `npm run build`: passed with the production Vite bundle.
+- `npm audit --omit=dev --audit-level=high`: **0 vulnerabilities** after updating Vite to the patched `6.4.5` release.
+- `node --check functions/loopline-api.mjs`: passed.
+- `git diff --check`: passed for the checkout changes.
+- These local checks used Node `26.12.0` / npm `11.20.0`. The supported release runtime remains Node `22.11.0` with npm `10.x`, and CI/Docker are pinned to that release. A local Node 22 run was not available during this check.
+- Docker image execution remains unverified because the local Docker daemon was unavailable. The image definition pins preview to port `4173` and includes a container health check.
+- Evidence-boundary source changes in the current checkout were redeployed to `loopline-api` on 2026-10-22; live health and direct function CORS were rechecked after deployment. Frontend Pages deployment remains governed by the main-only workflow change above.
 
 ## TestSprite cloud evidence
 
@@ -104,8 +116,9 @@ The generated suite should cover the current observable product surface:
 ## Honest limitations
 
 - The app reads public GitHub evidence through a deployed InsForge function; it does not write to GitHub, run CI, install an App, or change code.
+- The deployed InsForge auth endpoints currently echo arbitrary credentialed origins; the project function CORS allowlist is strict, but production auth/session restoration still needs a platform-side auth CORS allowlist or documented configuration. This was reported to InsForge as feedback `bd69ce63-4b90-4826-a9ea-b478d33381a5`.
 - Authenticated persistence and two-user isolation were not exercised with created test users in the recorded backend verification.
-- The current branch deployment was rebuilt with the three public `VITE_INSFORGE_*` values and served the current workspace. Main-branch promotion remains tied to the open pull request.
+- The recorded branch deployment was rebuilt with the three public `VITE_INSFORGE_*` values and served the workspace from its deployed commit. Main-branch promotion remains tied to the open pull request.
 - Light-theme regression tests validate CSS tokens and representative contrast pairs, not rendered desktop/mobile layouts or complete browser accessibility.
 - Component interaction tests validate the real React app in JSDOM, not browser layout, native event defaults, or animation performance.
 - The Docker image definition is present and reproducible; local Docker image execution remains to be verified once the Docker daemon is running.

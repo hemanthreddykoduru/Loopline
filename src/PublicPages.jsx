@@ -116,7 +116,7 @@ export function LandingPage({ navigate, user, preview }) {
         <Brand />
         <nav className="pub-nav" aria-label="Main navigation">
           <SectionLink target="product" data-testid="landing-nav-product">Product</SectionLink>
-          <a href={repositoryUrl} target="_blank" rel="noreferrer" data-testid="landing-nav-repository">Repository <ArrowUpRight size={13} aria-hidden="true" /></a>
+          <a href={repositoryUrl} target="_blank" rel="noopener noreferrer" data-testid="landing-nav-repository">Repository <ArrowUpRight size={13} aria-hidden="true" /></a>
           <SectionLink target="help" data-testid="landing-nav-help">Help</SectionLink>
         </nav>
         <div className="pub-account-nav">
@@ -174,7 +174,7 @@ export function LandingPage({ navigate, user, preview }) {
             <div className="pub-workflow-heading">
               <h2 id="pub-workflow-title">From repository<br />to release review.</h2>
               <p>Your CI stays in GitHub. Loopline gives its results a shared place in the release process.</p>
-              <a className="pub-text-link" href={repositoryUrl} target="_blank" rel="noreferrer" data-testid="landing-source-link"><GithubLogo size={18} aria-hidden="true" /> View the project <ArrowUpRight size={15} aria-hidden="true" /></a>
+              <a className="pub-text-link" href={repositoryUrl} target="_blank" rel="noopener noreferrer" data-testid="landing-source-link"><GithubLogo size={18} aria-hidden="true" /> View the project <ArrowUpRight size={15} aria-hidden="true" /></a>
             </div>
              <ol className="pub-steps">
                <Reveal as="li"><span className="pub-step-number" aria-hidden="true">01</span><div><h3>Connect a public repository</h3><p>Add the GitHub owner and repository name. Your workspace starts empty until you connect it.</p></div><span className="pub-step-tag">source</span></Reveal>
@@ -206,7 +206,7 @@ export function LandingPage({ navigate, user, preview }) {
            </Reveal>
         </main>
 
-        <footer className="pub-footer pub-wrap"><Brand /><p>Release evidence, tied to the source.</p><a href={repositoryUrl} target="_blank" rel="noreferrer" data-testid="landing-footer-repository">Project on GitHub <ArrowUpRight size={14} aria-hidden="true" /></a></footer>
+        <footer className="pub-footer pub-wrap"><Brand /><p>Release evidence, tied to the source.</p><a href={repositoryUrl} target="_blank" rel="noopener noreferrer" data-testid="landing-footer-repository">Project on GitHub <ArrowUpRight size={14} aria-hidden="true" /></a></footer>
       </div>
   )
 }
@@ -495,7 +495,7 @@ function AuthFlow({ mode = 'login', navigate, auth, authConfig, onAuthenticated,
           {mode === 'signup' && !verification && <p className="auth-account-note">Your account does not grant GitHub access. You choose a public repository after signing in.</p>}
         </section>
       </main>
-      <footer className="auth-page-footer pub-wrap"><span>Loopline · Release readiness</span><a href={repositoryUrl} target="_blank" rel="noreferrer" data-testid="auth-source-link">Project on GitHub <ArrowUpRight size={14} aria-hidden="true" /></a></footer>
+      <footer className="auth-page-footer pub-wrap"><span>Loopline · Release readiness</span><a href={repositoryUrl} target="_blank" rel="noopener noreferrer" data-testid="auth-source-link">Project on GitHub <ArrowUpRight size={14} aria-hidden="true" /></a></footer>
     </div>
   )
 }
