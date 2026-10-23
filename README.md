@@ -114,7 +114,7 @@ Publish directory: `dist`
 
 The local Vite server proxies `/api` and `/functions` to InsForge during development, so auth refresh cookies and the optional functions URL fallback remain same-origin. The Docker preview uses port `4173`, which is included in the backend origin allowlist. Add any new static-host origin to `ORIGINS` in `functions/loopline-api.mjs` and redeploy the function before enabling connected API calls there.
 
-For a Vercel deployment, install the Vercel CLI locally or use the Vercel dashboard, then run the platform's normal project import flow. Do not put tokens in this repository; use the platform's environment-variable settings.
+For a Vercel deployment, install the Vercel CLI locally or use the Vercel dashboard, then run the platform's normal project import flow. The current hackathon deployment is `https://loopline-hackathon.vercel.app`; its exact origin is allowlisted in the backend. Do not put tokens in this repository; use the platform's environment-variable settings.
 
 ## Product map
 
