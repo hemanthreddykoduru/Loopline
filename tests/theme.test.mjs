@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
 const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
+const main = readFileSync(new URL('../src/main.jsx', import.meta.url), 'utf8')
 const root = css.match(/:root\s*\{([^}]+)\}/)[1]
 const tokens = new Map(
   [...root.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map(([, name, value]) => [name, value.trim()]),
@@ -50,6 +51,11 @@ test('light mode is the default with consistently light page, panel, and overlay
   }
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8')
   assert.ok(html.includes(`name="theme-color" content="${tokens.get('--ink')}"`))
+})
+
+test('the bundled display font is selected by the application root', () => {
+  assert.match(main, /@fontsource-variable\/manrope\/wght\.css/)
+  assert.match(root, /font-family:\s*"Manrope Variable"/)
 })
 
 // Token-level checks, not a substitute for browser-rendered accessibility tests.

@@ -16,7 +16,7 @@ import {
 import { Brand, Dialog } from './ui.jsx'
 import './workspace.css'
 
-const defaultRepository = 'hemanthreddykoduru/Loopline'
+const defaultRepository = ''
 const conclusionLabels = {
   ready: 'Ready',
   blocked: 'Blocked',
@@ -127,7 +127,6 @@ export function EvidencePanel({ project = null, snapshot = null, onConnect, comp
     <section className={`ws-evidence${compact ? ' ws-evidence-compact' : ''}${stale ? ' ws-evidence-stale' : ''}`} aria-labelledby={headingId} data-testid="evidence-panel">
       <header className="ws-evidence-heading">
         <div>
-          <p className="ws-eyebrow">Commit evidence</p>
           <h2 id={headingId}>{snapshot ? 'Latest saved snapshot' : 'No evidence yet'}</h2>
         </div>
         <span className={`ws-status ws-status-${status}`} data-testid="evidence-status" data-conclusion={status} role="status">
@@ -187,7 +186,7 @@ function EvidenceLedger({ history }) {
   const entries = history.slice(0, 10)
   return (
     <section className="ws-ledger" aria-labelledby="ws-ledger-heading" data-testid="evidence-history">
-      <header className="ws-ledger-heading"><div><p className="ws-eyebrow">Evidence ledger</p><h2 id="ws-ledger-heading">Saved snapshots</h2></div><span className="ws-caption">Latest {entries.length} · limited to 10</span></header>
+      <header className="ws-ledger-heading"><div><h2 id="ws-ledger-heading">Saved snapshots</h2></div><span className="ws-caption">Last {entries.length} · up to 10</span></header>
       {!entries.length ? <p className="ws-ledger-empty">No snapshots have been saved yet.</p> : (
         <ol className="ws-history-list">
           {entries.map((entry, index) => (
@@ -482,7 +481,7 @@ function WorkspaceSession({ user, api, onSignOut, navigate }) {
         </aside>
 
         <main className="ws-main" id="main-content" tabIndex={-1}>
-          <div className="ws-page-heading"><p className="ws-eyebrow">Repository workspace</p><h1>Repository evidence</h1><p>Read the checks that were actually published for a commit, then follow them back to their source.</p></div>
+          <div className="ws-page-heading"><p className="ws-eyebrow">Repository workspace</p><h1>Repository evidence</h1><p>Read the checks published for one commit, then follow each result back to GitHub.</p></div>
           <div className={`ws-operation${operationCopy || notice ? '' : ' ws-sr-only'}`} role="status" aria-live="polite" aria-atomic="true" data-testid="workspace-operation">{operationCopy || notice}</div>
           {signOutError ? <p className="ws-alert" role="alert" data-testid="signout-error">{signOutError}</p> : null}
           {connectError && !connectOpen ? <div className="ws-alert" role="alert" data-testid="connect-repository-error-closed"><p>Connection failed. {connectError}</p><button type="button" className="ws-button ws-button-secondary" onClick={() => setConnectOpen(true)}>Review connection</button></div> : null}
@@ -491,7 +490,7 @@ function WorkspaceSession({ user, api, onSignOut, navigate }) {
           {selectedProject ? (
             <section className="ws-project-detail" aria-labelledby="ws-project-name" data-testid="selected-project" data-project-id={selectedProject.id}>
               <header className="ws-project-heading">
-                <div><p className="ws-eyebrow">Selected repository</p><h2 id="ws-project-name">{selectedProject.full_name}</h2>{selectedProject.description ? <p>{selectedProject.description}</p> : null}</div>
+                <div><h2 id="ws-project-name">{selectedProject.full_name}</h2>{selectedProject.description ? <p>{selectedProject.description}</p> : null}</div>
                 <SourceLink href={selectedProject.html_url}>Repository</SourceLink>
               </header>
               <dl className="ws-project-metadata">
@@ -531,7 +530,7 @@ function WorkspaceSession({ user, api, onSignOut, navigate }) {
         <Dialog title="Connect a public repository" description="Loopline reads published GitHub checks. It does not install a GitHub App, access private repositories, or start test runs." onClose={() => setConnectOpen(false)} testId="connect-repository-dialog" initialFocus="[data-testid='connect-repository-input']">
           <form className="ws-form" onSubmit={connectRepository} noValidate aria-busy={connecting}>
             <label className="ws-field" htmlFor={`${formId}-repository`}><span>GitHub repository</span><input ref={repositoryInput} id={`${formId}-repository`} type="text" value={repository} onChange={(event) => { setRepository(event.target.value); setRepositoryError(''); setConnectError('') }} placeholder="owner/repository or https://github.com/owner/repository" autoCapitalize="none" autoCorrect="off" spellCheck={false} disabled={connecting} aria-invalid={Boolean(repositoryError)} aria-describedby={`${formId}-repository-help${repositoryError ? ` ${formId}-repository-error` : ''}${connectError ? ` ${formId}-connect-error` : ''}`} data-testid="connect-repository-input" /></label>
-            <p className="ws-field-help" id={`${formId}-repository-help`}>Use a public repository you can open on GitHub without signing in. Confirm the prefilled repository or enter your own.</p>
+             <p className="ws-field-help" id={`${formId}-repository-help`}>Use a public repository you can open on GitHub without signing in.</p>
             {repositoryError ? <p className="ws-field-error" id={`${formId}-repository-error`} role="alert" data-testid="connect-repository-field-error">{repositoryError}</p> : null}
             <div className="ws-check-option"><input id={`${formId}-testsprite`} type="checkbox" checked={requireTestSprite} onChange={(event) => setRequireTestSprite(event.target.checked)} disabled={connecting} aria-describedby={`${formId}-testsprite-help`} data-testid="connect-repository-require-testsprite" /><label htmlFor={`${formId}-testsprite`}>Require TestSprite evidence for readiness</label><p id={`${formId}-testsprite-help`}>When enabled, readiness requires passing TestSprite evidence for the same commit. Connecting does not install TestSprite; publish its results to GitHub through your existing test workflow.</p></div>
             {connectError ? <p className="ws-alert" id={`${formId}-connect-error`} role="alert" data-testid="connect-repository-error">{connectError}</p> : null}

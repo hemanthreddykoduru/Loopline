@@ -509,7 +509,7 @@
   border: 1px solid var(--ws-border-strong);
   border-radius: var(--ws-radius-panel);
   background: var(--ws-surface);
-  box-shadow: 0 12px 32px var(--shadow, rgba(37, 76, 52, 0.04));
+  box-shadow: none;
 }
 
 .ws-project-heading {
@@ -569,12 +569,11 @@
 .ws-check-fields dt {
   margin-bottom: 5px;
   color: var(--ws-muted-dark);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 10px;
+  font-family: inherit;
+  font-size: 11px;
   font-weight: 650;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.01em;
   line-height: 1.45;
-  text-transform: uppercase;
 }
 
 .ws-project-metadata dd {
@@ -965,7 +964,6 @@
 
 .ws-check-row:hover {
   background: var(--ws-accent-soft);
-  transform: translateX(2px);
 }
 
 .ws-check-name {
@@ -1094,7 +1092,7 @@
 .ws-ledger {
   padding: 29px 32px 30px;
   border-top: 1px solid var(--ws-border);
-  background: var(--ws-surface-raised);
+  background: transparent;
 }
 
 .ws-ledger-heading {
@@ -1136,7 +1134,6 @@
 
 .ws-history-row:hover {
   background: var(--ws-accent-soft);
-  transform: translateX(2px);
 }
 
 .ws-history-when,

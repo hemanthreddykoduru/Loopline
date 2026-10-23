@@ -68,44 +68,44 @@ export function LandingPage({ navigate, user, preview }) {
   const illustrativePreview = (
     <div className="pub-evidence-preview" aria-label="Illustrative evidence preview">
       <div className="pub-preview-header">
-        <span className="pub-preview-label">Illustrative evidence view</span>
-        <span className="pub-preview-notice">Sample data · not live</span>
+        <span className="pub-preview-label">Evidence view</span>
+        <span className="pub-preview-notice">Example layout · not live</span>
       </div>
 
       <div className="pub-preview-repository">
         <span className="pub-preview-icon" aria-hidden="true"><GithubLogo size={20} /></span>
-        <span className="pub-preview-repository-copy"><strong>Loopline / public repository</strong><small>Read-only GitHub source</small></span>
-        <ArrowUpRight size={16} aria-hidden="true" />
+        <span className="pub-preview-repository-copy"><strong>Public GitHub repository</strong><small>Connect one from the workspace</small></span>
+        <span className="pub-preview-check-state">not connected</span>
       </div>
 
       <div className="pub-preview-commit">
-        <div className="pub-preview-commit-heading"><span className="pub-data-label">Commit under review</span><span className="pub-commit-ref">main</span></div>
-        <code>9d3b756a9226bb38170cf87a3545182ed4c5190f</code>
-        <p><GitCommit size={15} aria-hidden="true" /> Exact commit SHA · source linked</p>
+        <div className="pub-preview-commit-heading"><span className="pub-data-label">One exact commit</span><span className="pub-commit-ref">selected in workspace</span></div>
+        <strong className="pub-preview-commit-title">Branch or pull request → one SHA</strong>
+        <p><GitCommit size={15} aria-hidden="true" /> The evidence view stays tied to that commit.</p>
       </div>
 
       <div className="pub-preview-checks">
-        <div className="pub-preview-checks-heading"><span>Published checks</span><small>from GitHub</small></div>
+        <div className="pub-preview-checks-heading"><span>Published checks</span><small>read from GitHub</small></div>
         <ul>
           <li>
             <CheckCircle className="pub-preview-check-icon" size={18} aria-hidden="true" />
-            <span className="pub-preview-check-copy"><strong>TestSprite</strong><small>Published check</small></span>
-            <span className="pub-preview-check-state">observed</span>
+            <span className="pub-preview-check-copy"><strong>Check runs</strong><small>Published by your CI</small></span>
+            <span className="pub-preview-check-state">linked</span>
           </li>
           <li>
             <CheckCircle className="pub-preview-check-icon" size={18} aria-hidden="true" />
-            <span className="pub-preview-check-copy"><strong>GitHub Actions</strong><small>Published check</small></span>
-            <span className="pub-preview-check-state">reported</span>
+            <span className="pub-preview-check-copy"><strong>Commit statuses</strong><small>Reported on the same SHA</small></span>
+            <span className="pub-preview-check-state">matched</span>
           </li>
           <li>
             <ShieldCheck className="pub-preview-check-icon" size={18} aria-hidden="true" />
-            <span className="pub-preview-check-copy"><strong>Source access</strong><small>Public, read-only</small></span>
-            <span className="pub-preview-check-state">verified</span>
+            <span className="pub-preview-check-copy"><strong>Source links</strong><small>Open the result in GitHub</small></span>
+            <span className="pub-preview-check-state">available</span>
           </li>
         </ul>
       </div>
 
-      <p className="pub-preview-footnote">Illustrative view · no repository is connected here.</p>
+      <p className="pub-preview-footnote">No repository is connected in this example. The workspace shows the real result.</p>
     </div>
   )
 
@@ -128,7 +128,7 @@ export function LandingPage({ navigate, user, preview }) {
         <main id="pub-main" tabIndex={-1}>
           <section className="pub-hero pub-wrap" aria-labelledby="pub-hero-title">
             <div className="pub-hero-copy">
-              <p className="pub-eyebrow"><GitBranch size={16} aria-hidden="true" /> Release readiness, grounded in GitHub</p>
+              <p className="pub-eyebrow"><GitBranch size={16} aria-hidden="true" /> GitHub evidence for one commit</p>
               <h1 id="pub-hero-title">Ship the<br className="pub-hero-break" /> right commit.</h1>
               <p className="pub-hero-description">Review one release against one exact commit and the checks GitHub has already published. Nothing is written back.</p>
               <div className="pub-hero-actions">
@@ -147,7 +147,7 @@ export function LandingPage({ navigate, user, preview }) {
           <section className="pub-principles" id="product" tabIndex={-1} aria-labelledby="pub-product-title">
             <div className="pub-wrap pub-principles-grid">
               <div className="pub-section-intro">
-                <h2 id="pub-product-title">Make release readiness legible.</h2>
+                <h2 id="pub-product-title">See what belongs to the commit.</h2>
                 <p>A passing check only helps when the team can see what it belongs to. Loopline keeps the commit, its source, and its published checks in the same frame.</p>
               </div>
               <div className="pub-principles-rail">
@@ -163,7 +163,7 @@ export function LandingPage({ navigate, user, preview }) {
                  </Reveal>
                  <Reveal as="article">
                    <span className="pub-principle-index">03</span>
-                   <div><h3>Keep the boundary clear</h3><p>Public, read-only GitHub access means Loopline observes evidence without running tests or changing code.</p></div>
+                    <div><h3>Keep access read-only</h3><p>Loopline reads public GitHub evidence without running tests or changing code.</p></div>
                    <ShieldCheck size={22} aria-hidden="true" />
                  </Reveal>
                </div>
@@ -173,20 +173,20 @@ export function LandingPage({ navigate, user, preview }) {
           <section className="pub-workflow pub-wrap" id="workflow" tabIndex={-1} aria-labelledby="pub-workflow-title">
             <div className="pub-workflow-heading">
               <h2 id="pub-workflow-title">From repository<br />to release review.</h2>
-              <p>Your CI stays in GitHub. Loopline gives its results a shared place in the release process.</p>
+               <p>Your CI stays in GitHub. Loopline gives its published results one place to review.</p>
               <a className="pub-text-link" href={repositoryUrl} target="_blank" rel="noopener noreferrer" data-testid="landing-source-link"><GithubLogo size={18} aria-hidden="true" /> View the project <ArrowUpRight size={15} aria-hidden="true" /></a>
             </div>
              <ol className="pub-steps">
-               <Reveal as="li"><span className="pub-step-number" aria-hidden="true">01</span><div><h3>Connect a public repository</h3><p>Add the GitHub owner and repository name. Your workspace starts empty until you connect it.</p></div><span className="pub-step-tag">source</span></Reveal>
-               <Reveal as="li"><span className="pub-step-number" aria-hidden="true">02</span><div><h3>Choose the commit to review</h3><p>Create a release around its exact SHA, with a clear reference back to the source.</p></div><span className="pub-step-tag">commit</span></Reveal>
-               <Reveal as="li"><span className="pub-step-number" aria-hidden="true">03</span><div><h3>Review the evidence together</h3><p>Read the checks attached to that commit and open GitHub when you need the underlying details.</p></div><span className="pub-step-tag">evidence</span></Reveal>
+                <Reveal as="li"><span className="pub-step-number" aria-hidden="true">01</span><div><h3>Connect a public repository</h3><p>Add the GitHub owner and repository name. Your workspace starts empty until you connect it.</p></div></Reveal>
+                <Reveal as="li"><span className="pub-step-number" aria-hidden="true">02</span><div><h3>Choose the commit to review</h3><p>Pick a branch or pull request. Loopline saves the exact SHA it read.</p></div></Reveal>
+                <Reveal as="li"><span className="pub-step-number" aria-hidden="true">03</span><div><h3>Review the published checks</h3><p>Read the results attached to that SHA and open GitHub for the underlying details.</p></div></Reveal>
              </ol>
           </section>
 
           <section className="pub-help pub-wrap" id="help" tabIndex={-1} aria-labelledby="pub-help-title">
             <div className="pub-help-intro">
-              <h2 id="pub-help-title">Know what you’re connecting.</h2>
-              <p>Loopline is deliberately narrow: a shared read of GitHub evidence, with no hidden automation behind the result.</p>
+              <h2 id="pub-help-title">Read before you connect.</h2>
+              <p>Loopline reads public GitHub evidence. It does not install an app, run CI, or change your repository.</p>
             </div>
              <Reveal className="pub-questions">
                <details open><summary>Which repositories can I connect?</summary><p>The first connector reads public GitHub repositories only. Private repositories and GitHub App authorization are not supported. Your Loopline account is separate from repository access.</p></details>
@@ -198,7 +198,7 @@ export function LandingPage({ navigate, user, preview }) {
            <Reveal as="section" className="pub-final-cta" aria-labelledby="pub-final-cta-title">
              <div className="pub-wrap pub-final-cta-inner">
                <div>
-                <h2 id="pub-final-cta-title">Keep the evidence close to the release.</h2>
+                 <h2 id="pub-final-cta-title">Review one commit with its checks.</h2>
                 <p>Start with one public repository and one commit your team needs to review.</p>
                </div>
                <RouteLink className="pub-button pub-button-primary" to={destination} navigate={navigate} data-testid="landing-bottom-cta">{cta}<ArrowRight size={18} aria-hidden="true" /></RouteLink>
@@ -206,7 +206,7 @@ export function LandingPage({ navigate, user, preview }) {
            </Reveal>
         </main>
 
-        <footer className="pub-footer pub-wrap"><Brand /><p>Release evidence, tied to the source.</p><a href={repositoryUrl} target="_blank" rel="noopener noreferrer" data-testid="landing-footer-repository">Project on GitHub <ArrowUpRight size={14} aria-hidden="true" /></a></footer>
+         <footer className="pub-footer pub-wrap"><Brand /><p>Public GitHub evidence, tied to the source.</p><a href={repositoryUrl} target="_blank" rel="noopener noreferrer" data-testid="landing-footer-repository">View on GitHub <ArrowUpRight size={14} aria-hidden="true" /></a></footer>
       </div>
   )
 }

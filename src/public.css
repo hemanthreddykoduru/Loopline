@@ -437,6 +437,11 @@
 
 .pub-page .pub-preview-repository-copy small { color: var(--pub-muted); font-size: 11px; }
 
+.pub-page .pub-preview-repository > .pub-preview-check-state {
+  color: var(--pub-muted);
+  font-size: 10px;
+}
+
 .pub-page .pub-preview-commit {
   padding: 18px 0 17px;
   border-block: 1px solid var(--pub-border);
@@ -463,6 +468,16 @@
   font-size: clamp(11px, 1.25vw, 14px);
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+
+.pub-page .pub-preview-commit-title {
+  display: block;
+  margin-top: 11px;
+  color: var(--pub-text);
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
 }
 
 .pub-page .pub-preview-commit p {
