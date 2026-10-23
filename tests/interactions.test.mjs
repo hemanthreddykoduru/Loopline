@@ -194,10 +194,12 @@ test('the public landing page links to an unavailable auth state without backend
   assert.ok(byId('landing-hero-cta'))
 })
 
-test('session bootstrap keeps the landing page visible instead of showing a loading message', async () => {
+test('session bootstrap keeps the dashboard route stable instead of flashing the landing page', async () => {
+  window.location.hash = '#/app'
   await render(createElement(App, { runtimeOverride: createPendingRuntime() }))
-  assert.ok(byId('landing-hero-cta'))
-  assert.equal(document.body.textContent.includes('Loading Loopline'), false)
+  assert.ok(byId('session-bootstrap'))
+  assert.equal(byId('landing-hero-cta'), null)
+  assert.match(byId('session-bootstrap').textContent, /Restoring your session/)
 })
 
 test('a missing refresh token is treated as signed out, not as an unavailable auth service', async () => {

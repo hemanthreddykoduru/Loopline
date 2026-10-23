@@ -6,6 +6,7 @@ import {
   normalizeLooplineError,
   normalizePublicAuthConfig,
 } from './loopline-api.js'
+import { Brand } from './ui.jsx'
 
 const runtime = createLooplineRuntime()
 
@@ -25,6 +26,32 @@ export function routeFromHash(hash = typeof window === 'undefined' ? '' : window
 export function normalizeRoute(path) {
   const value = typeof path === 'string' && path.startsWith('/') ? path : `/${path || ''}`
   return routes.has(value) ? value : '/'
+}
+
+function SessionBootstrap() {
+  return (
+    <div className="ws-workspace ws-session-bootstrap" data-testid="session-bootstrap" aria-busy="true">
+      <header className="ws-topbar">
+        <div className="ws-topbar-brand"><Brand /><span className="ws-topbar-divider" aria-hidden="true" /><span>Workspace</span></div>
+        <div className="ws-account" aria-hidden="true"><span className="ws-bootstrap-account-line" /></div>
+      </header>
+      <div className="ws-layout">
+        <aside className="ws-sidebar" aria-hidden="true">
+          <div className="ws-sidebar-heading"><h2>Repositories</h2></div>
+          <div className="ws-bootstrap-button" />
+          <div className="ws-bootstrap-sidebar-lines"><span /><span /><span /></div>
+        </aside>
+        <main className="ws-main" id="main-content" tabIndex={-1}>
+          <div className="ws-page-heading">
+            <p className="ws-eyebrow">Repository workspace</p>
+            <h1>Repository evidence</h1>
+            <p>Restoring your session before loading the workspace.</p>
+          </div>
+          <div className="ws-detail-message ws-session-bootstrap-message" role="status">Checking your Loopline session…</div>
+        </main>
+      </div>
+    </div>
+  )
 }
 
 function App({ runtimeOverride = runtime } = {}) {
@@ -157,9 +184,10 @@ function App({ runtimeOverride = runtime } = {}) {
     )
   }
 
-  // Keep public surfaces visible while session/config bootstrap runs. The SDK
-  // result still controls whether `/app` becomes the authenticated workspace.
-  if (route === '/app' && !authReady) return <LandingPage navigate={navigate} user={user} />
+  // Keep the dashboard route visually stable while session/config bootstrap runs.
+  // Rendering the public landing page here caused an authenticated refresh to flash
+  // away from the workspace before the SDK restored the session.
+  if (route === '/app' && !authReady) return <SessionBootstrap />
   if (route === '/app' && user && activeRuntime.api) {
     return <Workspace user={user} api={activeRuntime.api} onSignOut={signOut} navigate={navigate} />
   }

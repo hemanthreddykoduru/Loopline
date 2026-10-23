@@ -122,6 +122,68 @@ body {
   outline-offset: 3px;
 }
 
+.ws-session-bootstrap .ws-bootstrap-account-line {
+  display: block;
+  width: 168px;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--neutral-soft);
+}
+
+.ws-session-bootstrap .ws-bootstrap-button {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-muted);
+}
+
+.ws-session-bootstrap .ws-bootstrap-sidebar-lines {
+  display: grid;
+  gap: 12px;
+  margin: 25px 8px 0;
+}
+
+.ws-session-bootstrap .ws-bootstrap-sidebar-lines span,
+.ws-session-bootstrap-message::before,
+.ws-session-bootstrap-message::after {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--neutral-soft);
+  content: "";
+}
+
+.ws-session-bootstrap .ws-bootstrap-sidebar-lines span:nth-child(1) { width: 80%; }
+.ws-session-bootstrap .ws-bootstrap-sidebar-lines span:nth-child(2) { width: 65%; }
+.ws-session-bootstrap .ws-bootstrap-sidebar-lines span:nth-child(3) { width: 74%; }
+
+.ws-session-bootstrap-message {
+  display: grid;
+  align-content: center;
+  gap: 15px;
+  min-height: 180px;
+  color: var(--muted);
+}
+
+.ws-session-bootstrap-message::before { width: min(360px, 78%); }
+.ws-session-bootstrap-message::after { width: min(260px, 56%); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ws-session-bootstrap .ws-bootstrap-account-line,
+  .ws-session-bootstrap .ws-bootstrap-button,
+  .ws-session-bootstrap .ws-bootstrap-sidebar-lines span,
+  .ws-session-bootstrap-message::before,
+  .ws-session-bootstrap-message::after {
+    animation: ll-bootstrap-pulse 1.6s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes ll-bootstrap-pulse {
+  from { opacity: 0.52; }
+  to { opacity: 1; }
+}
+
 ::selection {
   color: var(--on-accent);
   background: var(--cobalt);
