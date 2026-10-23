@@ -1,7 +1,12 @@
 node_modules
 dist
+/ECC/
 .DS_Store
 .env
 .env.*
 !.env.example
+.insforge/
+.omnirush/
+.opencode/omnirush/
 *.log
+.vercel/
